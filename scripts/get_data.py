@@ -10,7 +10,7 @@ import sys
 import urllib.request
 import zipfile
 
-from cse250a.paths import DATA_DIR
+from .paths import DATA_DIR
 
 # name -> (url or None, note). None = manual download (login/form required).
 DATASETS = {
