@@ -1,0 +1,33 @@
+name: Task
+description: A unit of work someone can pick up
+title: "[Task] "
+labels: ["task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should exist when this is done?
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: |
+        - [ ] Function in src/cse250a/...
+        - [ ] Figure saved to figures/...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Data, Modeling, Inference/Learning, Experiments, Report, Infra]
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / links
+      description: Lecture refs, papers, related issues

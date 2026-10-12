@@ -1,0 +1,32 @@
+name: Experiment
+description: A model configuration to run and compare
+title: "[Exp] "
+labels: ["experiment"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      placeholder: Does adding a latent node improve held-out log-likelihood?
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Exact runner command(s)
+      render: bash
+      placeholder: uv run cse250a run --model hmm --seed 0
+    validations:
+      required: true
+  - type: textarea
+    id: metric
+    attributes:
+      label: Metric(s) & expected result
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results (fill in after running)
+      description: Numbers, results/ folder name, figures, interpretation
