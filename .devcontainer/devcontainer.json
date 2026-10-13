@@ -22,7 +22,9 @@
 				"GitHub.vscode-pull-request-github",
 				"charliermarsh.ruff",
 				"njpwerner.autodocstring",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"James-Yu.latex-workshop",
+				"tomoki1207.pdf"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
