@@ -18,7 +18,11 @@
 				"ms-toolsai.jupyter",
 				"ms-toolsai.vscode-jupyter-cell-tags",
 				"tamasfe.even-better-toml",
-				"ms-toolsai.datawrangler"
+				"ms-toolsai.datawrangler",
+				"GitHub.vscode-pull-request-github",
+				"charliermarsh.ruff",
+				"njpwerner.autodocstring",
+				"redhat.vscode-yaml"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
@@ -26,6 +30,6 @@
 			}
 		}
 	},
-	"postCreateCommand": "uv sync --locked",
+	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes",
 	"remoteUser": "vscode"
 }
