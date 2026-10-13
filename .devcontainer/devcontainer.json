@@ -26,6 +26,6 @@
 			}
 		}
 	},
-	"postCreateCommand": "uv sync --locked",
+	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes",
 	"remoteUser": "vscode"
 }

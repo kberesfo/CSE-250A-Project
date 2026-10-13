@@ -91,6 +91,8 @@ uv run cse250a run --model hmm --seed 1
 
 Each run writes to `results/<name>_<timestamp>/` with the resolved `config.json` alongside its outputs, so every result records exactly how it was produced.
 
+`cse250a` is installed by `uv sync` from `[project.scripts]` in `pyproject.toml`, so there's no separate run script. `python -m cse250a ...` works too. Add new options in `src/cse250a/cli.py`. For sweeps over many configurations, loop over `uv run cse250a run ...` in a script under `scripts/`, or add a subcommand.
+
 ---
 
 ## Notebooks
@@ -123,38 +125,9 @@ Commit both `pyproject.toml` and `uv.lock`. Run all Python inside the container.
 
 ---
 
-## Workflow
+## Contributing
 
-We use **GitHub Flow**: `main` is protected and always works.
-
-1. Pick or create an issue (templates: **Task**, **Experiment**, **Bug**) and assign yourself.
-2. Branch from `main`: `feat/<short-name>`, `data/<short-name>`, `exp/<short-name>`, `fix/<short-name>`.
-3. Commit, push, and open a PR. Link the issue with `Closes #N`.
-4. Get **1 approval**, resolve all review threads, then **squash merge**. The branch is deleted automatically.
-
-```bash
-git switch main && git pull
-git switch -c feat/em-cpt-learning
-# ...work...
-git add -A && git commit -m "Add EM for CPT learning"
-git push -u origin feat/em-cpt-learning
-gh pr create --fill
-```
-
-**Async coordination**
-- **Project board:** who's doing what (Todo, In progress, In review, Done).
-- **Milestones:** issues are grouped by Proposal, Final, and Resubmission.
-- **Experiment issues:** record the question, the exact command, and the results. These feed the report's comparison section.
-- **`docs/decisions.md`:** one line per design decision (date, decision, why). This feeds the report's justification and reflection sections.
-
----
-
-## Course policy reminders
-
-- Code must be **Python**.
-- **Cite** any open-source code you adapt, in a comment at the top of the file and in the report.
-- **Disclose** any Generative AI use, as required by the course guidelines.
-- Every member writes a contribution statement. Issue assignments and PR authorship make this easy.
+`main` is protected; all changes go through a reviewed PR. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the workflow, branch naming, code conventions, and course policy reminders.
 
 ---
 
@@ -163,7 +136,6 @@ gh pr create --fill
 _Fill in once the dataset is chosen: name, source URL, license, and required citation._
 
 ---
-
 ## Team
 
 | Name | GitHub |

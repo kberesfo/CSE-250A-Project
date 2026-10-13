@@ -1,16 +1,18 @@
-"""Ensure project datasets exist in DATA_DIR (/data in the devcontainer).
+"""Ensure project datasets exist in config.paths.data_dir (<repo>/data by default).
 
-Runs automatically on container creation. Safe to re-run: datasets already
-present are skipped.
+Safe to re-run: datasets already present are skipped.
 
     uv run python scripts/get_data.py            # fetch anything missing
     uv run python scripts/get_data.py --list     # show status
 """
+
 import sys
 import urllib.request
 import zipfile
 
-from .paths import DATA_DIR
+from cse250a.modules.config import config
+
+DATA_DIR = config.paths.data_dir
 
 # name -> (url or None, note). None = manual download (login/form required).
 DATASETS = {
@@ -22,9 +24,12 @@ DATASETS = {
         "https://archive.ics.uci.edu/static/public/360/air+quality.zip",
         "UCI Air Quality",
     ),
-    "cmapss": (None, "NASA C-MAPSS: download manually, unzip into /data/cmapss/"),
-    "mlb": (None, "MLB Elo (Kaggle): download manually, unzip into /data/mlb/"),
-    "dominicks": (None, "Dominick's (Kilts Center): download manually into /data/dominicks/"),
+    "cmapss": (None, "NASA C-MAPSS: download manually, unzip into data/cmapss/"),
+    "mlb": (None, "MLB Elo (Kaggle): download manually, unzip into data/mlb/"),
+    "dominicks": (
+        None,
+        "Dominick's (Kilts Center): download manually into data/dominicks/",
+    ),
 }
 
 
@@ -50,7 +55,10 @@ def fetch(name: str) -> None:
         with zipfile.ZipFile(zip_path) as zf:
             zf.extractall(dest)
         print(f"[done]   {name}")
-    except Exception as e:  # don't break container setup over a flaky download
+    except (
+        OSError,
+        zipfile.BadZipFile,
+    ) as e:  # one flaky download shouldn't stop the others
         print(f"[warn]   {name}: download failed ({e}); re-run this script later")
     finally:
         zip_path.unlink(missing_ok=True)

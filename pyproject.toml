@@ -16,8 +16,10 @@ dependencies = [
     "tqdm>=4.70.1",
 ]
 
+# `uv sync` installs this as the `cse250a` command, so no separate run script is needed.
+# Add new subcommands/flags in src/cse250a/cli.py.
 [project.scripts]
-cse250a = "cse250a:main"
+cse250a = "cse250a.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
@@ -30,3 +32,7 @@ dev = [
     "nbstripout>=0.9.1",
     "ruff>=0.17.0",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebooks start with the README's setup cell, which imports config before it's used.
+"*.ipynb" = ["F401"]
