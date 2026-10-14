@@ -11,9 +11,9 @@ When you click **Reopen in Container**, VS Code builds that environment and conn
 ```
 Your machine (any OS)                  Container (Linux)
 ┌──────────────────────┐              ┌─────────────────────────────┐
-│ VS Code (the window) │ ──────────▶ │ Python 3.12, uv, .venv      │
+│ VS Code (the window) │ ───────────▶ │ Python 3.12, uv, .venv      │
 │ Docker               │              │ git, gh, ruff, nbstripout   │
-│ repo folder ◀───────┼── shared ──▶ │ /workspaces/<repo>          │
+│ repo folder ◀────────┼── shared ──▶ │ /workspaces/<repo>          │
 └──────────────────────┘              └─────────────────────────────┘
 ```
 
@@ -86,13 +86,7 @@ Usage is counted in *core*-hours, so the default 2-core machine uses 2 per hour.
 
 ## First-time setup
 
-1. Install Docker and start it. Wait until it says it's running.
-2. Install VS Code and the Dev Containers extension.
-3. Clone the repo and open the folder in VS Code.
-4. Click **Reopen in Container** in the pop-up, or run **Dev Containers: Reopen in Container** from the Command Palette (`Ctrl/Cmd+Shift+P`).
-5. Wait for the first build, which takes a few minutes. Click *show log* if you want to watch.
-6. Open a terminal (`` Ctrl+` ``). The prompt should show `vscode ➜ /workspaces/...`. You're inside.
-7. Check it works: `uv run cse250a --help`.
+See the step-by-step **[Setup Guide](SETUP.md)**. It covers installing Docker on each OS, opening the container, and verifying it works.
 
 ## Daily use
 
