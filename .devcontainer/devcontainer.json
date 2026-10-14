@@ -1,6 +1,9 @@
 {
 	"name": "CSE 250 Project",
-	"image": "mcr.microsoft.com/devcontainers/python:3-3.12-trixie",
+	"build": {
+	"dockerfile": "Dockerfile",
+	"context": ".."
+},
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1.1.3": {},

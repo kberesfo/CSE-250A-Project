@@ -1,0 +1,36 @@
+\section{Data Sourcing and Processing}
+\label{sec:data}
+
+% Rubric (Problem & Dataset): "Dataset described with sources, limits, and relevance."
+% Guidelines:
+%   - Where the data comes from.
+%   - Preprocessing (missing data, discretization, feature selection) and WHY
+%     each step matters for the problem.
+%
+% Outline:
+% - Source and description \citep{vito2008airquality, devito2008calibration}:
+%   size, time span, variables (table of variables used).
+% - Missing data: -200 encoding; missingness per variable (table or figure);
+%   how handled (EM vs. drop) and why.
+% - Discretization: bin scheme (quantile / domain thresholds), number of bins,
+%   sensitivity checked in Sec. 4.
+% - Feature selection: which sensors / pollutants kept (e.g., drop NMHC) and why.
+% - Train / test split: time-based (no shuffling of hourly data) and why.
+% - Limitations: one device, one site, one year; sensor drift.
+
+\todo{Data source, preprocessing steps, and justification.}
+
+% Example table:
+% \begin{table}[t]
+%   \centering
+%   \caption{Variables used.}
+%   \label{tab:variables}
+%   \begin{tabular}{lll}
+%     \toprule
+%     Variable & Type & Role in model \\
+%     \midrule
+%     CO(GT) & reference analyzer & partially observed \\
+%     PT08.S1 & tin-oxide sensor & observed \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
