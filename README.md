@@ -133,7 +133,11 @@ Commit both `pyproject.toml` and `uv.lock`. Run all Python inside the container.
 
 ## Data sources
 
-_Fill in once the dataset is chosen: name, source URL, license, and required citation._
+**UCI Air Quality**: 9,358 hourly records (Mar 2004 – Feb 2005) from a multisensor device in an Italian city, with reference analyzer measurements of CO, NMHC, benzene, NOx, NO2, plus temperature and humidity. Missing values are coded as `-200`.
+- Source: https://archive.ics.uci.edu/dataset/360/air+quality
+- License: CC BY 4.0
+- Citation: Vito, S. (2008). *Air Quality* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C59K5F
+- Paper: De Vito, S., Massera, E., Piga, M., Martinotto, L., & Di Francia, G. (2008). On field calibration of an electronic nose for benzene estimation in an urban pollution monitoring scenario. *Sensors and Actuators B: Chemical*, 129(2), 750–757.
 
 ---
 ## Team
