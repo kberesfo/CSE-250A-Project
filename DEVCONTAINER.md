@@ -11,9 +11,9 @@ When you click **Reopen in Container**, VS Code builds that environment and conn
 ```
 Your machine (any OS)                  Container (Linux)
 ┌──────────────────────┐              ┌─────────────────────────────┐
-│ VS Code (the window) │ ───────────▶ │ Python 3.12, uv, .venv      │
+│ VS Code (the window) │ ──────────▶ │ Python 3.12, uv, .venv      │
 │ Docker               │              │ git, gh, ruff, nbstripout   │
-│ repo folder ◀────────┼── shared ──▶ │ /workspaces/<repo>          │
+│ repo folder ◀───────┼── shared ──▶ │ /workspaces/<repo>          │
 └──────────────────────┘              └─────────────────────────────┘
 ```
 
@@ -36,11 +36,11 @@ With a dev container, the environment is defined **in the repo**, so everyone ge
 - **Reproducible.** `uv.lock` pins exact package versions. Graders, or future you, can rebuild the same environment.
 - **Isolated.** Nothing is installed on your machine, so this project can't break your other classes' setups, and vice versa.
 - **Disposable.** If something gets weird, **Rebuild Container** gives you a fresh environment in minutes.
-- **Works in the cloud too.** The same config runs in GitHub Codespaces in a browser, with no local install. This is a useful fallback.
+- **Works in the cloud too.** The same config runs in GitHub Codespaces, in a browser or VS Code, with no local install. It's free for verified students. See *No Docker? Use GitHub Codespaces*.
 
 ## Cons
 
-- **Extra software on your machine.** You need Docker, which takes some setup, especially on Windows. See *Host requirements* below.
+- **Extra software on your machine.** You need Docker, which takes some setup, especially on Windows. See *Host requirements* below, or skip it entirely with Codespaces.
 - **Resource overhead.** Docker uses RAM, CPU, and several GB of disk. It can feel heavy on an 8 GB laptop.
 - **Slow first build.** The first build downloads the image and installs packages, which takes several minutes. Later starts are fast.
 - **Another layer to understand.** "Is this on my machine or in the container?" can be confusing at first. Some errors, such as Docker not running or a mount failing, come from the container layer.
@@ -60,7 +60,29 @@ With a dev container, the environment is defined **in the repo**, so everyone ge
 
 **Windows:** Docker Desktop runs on WSL 2, and needs hardware virtualization enabled in BIOS/UEFI. See Docker's [Windows install page](https://docs.docker.com/desktop/setup/install/windows-install/) for supported Windows editions. For speed, clone the repo inside your WSL home folder (e.g. `~/dev/`), not on `C:\`.
 
-**Can't run Docker?** Use **GitHub Codespaces**. On the repo page, click **Code → Codespaces → Create codespace on main**. It runs this same dev container in your browser. Free GitHub accounts include 120 compute-hours and 15 GB of storage per month, so stop your codespace when you're done to save hours.
+## No Docker? Use GitHub Codespaces
+
+**Codespaces** runs this same dev container on GitHub's servers. You get the identical environment in a browser tab, or in desktop VS Code, with **nothing installed locally**: no Docker, no setup, any laptop, even a Chromebook or a lab machine.
+
+**It's free for us as students.** Verified students get free Codespaces use, up to **180 core-hours/month** with storage equivalent to GitHub Pro (20 GB). Verify through the [GitHub Student Developer Pack](https://education.github.com/pack) with your UCSD email. Without student verification, free accounts get 120 core-hours and 15 GB.
+
+Usage is counted in *core*-hours, so the default 2-core machine uses 2 per hour. 180 core-hours is about **90 hours of actual use per month**, which is plenty for this project.
+
+**Start one:** on the repo page, click **Code → Codespaces → Create codespace on main**. The first start builds the container, which takes a few minutes. After that it resumes in seconds.
+
+**Tips**
+- **Stop it when you're done** (**Code → Codespaces → … → Stop codespace**). Idle codespaces stop on their own after 30 minutes by default, but stopping manually saves hours.
+- **Push your work before deleting a codespace.** Files live in the codespace, not on your machine.
+- **Open it in desktop VS Code** for a nicer experience: **Code → Codespaces → … → Open in VS Code Desktop**. This needs the *GitHub Codespaces* extension.
+- **Check your usage** at GitHub → Settings → Billing and plans.
+
+| | Local dev container | Codespaces |
+|---|---|---|
+| Needs Docker | Yes | No |
+| Works offline | Yes | No |
+| Uses your laptop's RAM/CPU | Yes | No (runs in the cloud) |
+| Cost | Free | Free within the student quota |
+| Startup | Fast after first build | Fast after first start |
 
 ## First-time setup
 
@@ -98,3 +120,5 @@ Still stuck? Post the error, plus the output of **Dev Containers: Show Container
 - [VS Code: Developing inside a Container](https://code.visualstudio.com/docs/devcontainers/containers)
 - [VS Code: Dev Containers tutorial](https://code.visualstudio.com/docs/devcontainers/tutorial)
 - [containers.dev: the Dev Container spec](https://containers.dev/)
+- [GitHub Codespaces quickstart](https://docs.github.com/en/codespaces/getting-started/quickstart)
+- [GitHub Education for students](https://docs.github.com/en/education/about-github-education/github-education-for-students/about-github-education-for-students)
