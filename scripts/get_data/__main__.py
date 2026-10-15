@@ -2,10 +2,10 @@
 
 Safe to re-run: datasets already present are skipped.
 
-    uv run python scripts/get_data.py                # fetch anything missing
-    uv run python scripts/get_data.py air_quality    # fetch one dataset
-    uv run python scripts/get_data.py --list         # show status
-    uv run python scripts/get_data.py --force        # re-download, even if present
+    uv run python scripts/get_data                # fetch anything missing
+    uv run python scripts/get_data air_quality    # fetch one dataset
+    uv run python scripts/get_data --list         # show status
+    uv run python scripts/get_data --force        # re-download, even if present
 """
 
 import shutil

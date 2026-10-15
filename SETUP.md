@@ -120,7 +120,7 @@ Open a terminal in VS Code (`` Ctrl+` ``). The prompt should start with `vscode 
 
 ```bash
 uv run cse250a --help                       # project CLI works
-uv run python scripts/get_data.py --list    # dataset status
+uv run python scripts/get_data --list       # dataset status
 git status                                  # git works
 ```
 

@@ -2,7 +2,10 @@
 
 Final project for **CSE 150A/250A: Principles of Artificial Intelligence: Probabilistic Reasoning and Learning** (UCSD, Fall 2026).
 
-> **Topic:** _TBD — pending group vote._ One-paragraph summary of the problem, dataset, and model (BN / HMM / MDP) goes here once chosen.
+> **Topic: Estimating true air pollution from noisy low-cost sensors.**
+> Using the [UCI Air Quality](https://archive.ics.uci.edu/dataset/360/air+quality) dataset (one year of hourly readings from a roadside multisensor device in an Italian city), we treat the true pollutant concentration as a **hidden variable**, observed through cheap chemical sensors that are noisy, drift over time, and react to temperature and humidity. A reference analyzer gives ground truth, but with frequent gaps.
+>
+> **Methods:** a Bayesian network learned with **EM** to handle the missing reference values, with exact inference for *P(true level | sensors, weather)*; extended to an **HMM** to model how pollution evolves hour to hour (tentative).
 
 | Milestone | Due |
 |---|---|
@@ -62,10 +65,10 @@ Settings live in `src/cse250a/modules/config/` and are exported as one object:
 ```python
 from cse250a.modules.config import config
 
-config.paths.data_dir      # Path
+config.paths.data_dir  # Path
 config.paths.results_dir
 config.paths.figures_dir
-config.seed                # int
+config.seed  # int
 ```
 
 Every value has a default. Override any of them with an environment variable or a line in a gitignored `.env` file at the repo root:
