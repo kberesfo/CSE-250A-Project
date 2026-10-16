@@ -1,0 +1,25 @@
+% CSE 150A/250A Project Proposal
+% Due: Mon Oct 26, 11:59 PM PT (Gradescope). Limit: 1 page.
+% Required: Problem Description, Dataset Source, Methodology.
+%
+% Build:  cd paper/proposal && latexmk -pdf main.tex
+\documentclass[11pt]{article}
+\input{../common/preamble}
+
+\title{Estimating True Air Pollution from Noisy Low-Cost Sensors\\
+       \large Project Proposal --- CSE 150A/250A, Fall 2026}
+\input{../common/authors}
+\date{}
+
+\begin{document}
+\maketitle
+
+\input{sections/problem}
+\input{sections/dataset}
+\input{sections/methodology}
+
+\nocite{*}  % lists every entry in references.bib; delete once sections \cite{} them
+\bibliographystyle{plainnat}
+\bibliography{../references}
+
+\end{document}

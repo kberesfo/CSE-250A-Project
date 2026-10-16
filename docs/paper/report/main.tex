@@ -1,0 +1,35 @@
+% CSE 150A/250A Final Project Report
+% Due: Mon Nov 23, 11:59 PM PT (Gradescope). Optional resubmission: Fri Dec 11, 2:59 PM PT.
+% Limit: 7 content pages (Sections 1--6). References and appendices don't count.
+%
+% Build:  cd paper/report && latexmk -pdf main.tex
+\documentclass[11pt]{article}
+\input{../common/preamble}
+
+\title{Estimating True Air Pollution from Noisy Low-Cost Sensors}
+\input{../common/authors}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  \todo{3--5 sentences: problem, data, model, key result, one takeaway. Write last.}
+\end{abstract}
+
+\input{sections/01_problem}
+\input{sections/02_data}
+\input{sections/03_modeling}
+\input{sections/04_results}
+\input{sections/05_conclusion}
+\input{sections/06_reflections}
+
+% ---- Not counted toward the 7-page limit ----
+\nocite{*}  % lists every entry in references.bib; delete once sections \cite{} them
+\bibliographystyle{plainnat}
+\bibliography{../references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

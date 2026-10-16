@@ -1,0 +1,35 @@
+\section{Modeling and Inference}
+\label{sec:modeling}
+
+% Rubric (Methodology): "Method fully specified and justified. Enough detail
+% for replication."
+% Guidelines:
+%   - Specify the probabilistic model.
+%   - Assumptions, parameters, dependency structure; relate to the data/problem.
+%   - Inference / learning algorithms implemented.
+%
+% Outline:
+\subsection{Bayesian Network}
+\label{sec:bn}
+% - Structure figure (nodes, edges); justify each edge.
+% - Conditional independence assumptions and what they mean physically.
+% - Parameters: CPTs; count of free parameters.
+\todo{BN structure, assumptions, parameterization.}
+
+\subsection{Learning with Missing Data (EM)}
+\label{sec:em}
+% - E-step / M-step for this model \citep{dempster1977em}; initialization,
+%   restarts, convergence criterion.
+\todo{EM derivation / description for our model.}
+
+\subsection{Inference}
+\label{sec:inference}
+% - Queries we answer, e.g. P(true level | sensors, weather).
+% - Algorithm (exact: variable elimination); complexity.
+\todo{Inference queries and algorithm.}
+
+\subsection{Temporal Extension: HMM}
+\label{sec:hmm}
+% - Hidden state, emissions, transition assumptions \citep{rabiner1989hmm}.
+% - Baum--Welch for learning; forward--backward / Viterbi for inference.
+\todo{HMM model and algorithms (if pursued).}

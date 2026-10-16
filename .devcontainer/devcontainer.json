@@ -1,6 +1,9 @@
 {
 	"name": "CSE 250 Project",
-	"image": "mcr.microsoft.com/devcontainers/python:3-3.12-trixie",
+	"build": {
+	"dockerfile": "Dockerfile",
+	"context": ".."
+},
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1.1.3": {},
@@ -22,7 +25,9 @@
 				"GitHub.vscode-pull-request-github",
 				"charliermarsh.ruff",
 				"njpwerner.autodocstring",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"James-Yu.latex-workshop",
+				"tomoki1207.pdf"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
