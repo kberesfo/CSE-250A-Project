@@ -2,26 +2,31 @@
 
 **Goal:** estimate **air quality hour by hour** from low-cost sensors alone. The model infers each gas's true level from the sensor readings, then combines those levels into an hourly air quality rating (AQ).
 
-Each phase changes **one thing** from the phase before it, so every comparison isolates a single modeling choice. All phases share the same data module, discretization levels, time-based train/test split, and evaluation.
+Each phase builds on the one before it. All phases share the same data module, discretization levels, time-based train/test split, and evaluation.
 
-| Phase | Structure | Learning | Question it answers |
-|---|---|---|---|
-| 1 | Single gas: `Hour → Gas → Sᵢ ← W`, i = 1…5 | MLE | Baseline: how well do the sensors recover one gas? |
-| 2 | One gas per sensor (plate over gases) | MLE | Does pairing each sensor with its own target gas help? |
-| 3 | Phase 2 with latent gas levels | EM | Does using hours with missing reference readings help? |
-| 4 | Phase 3 chained hour to hour (HMM) | Baum–Welch | Does temporal structure help? |
-| AQ | Computed on top of Phases 2–4 | none (deterministic) | How well can hourly air quality be predicted from sensors alone? |
+**Naming used throughout (and in the figures)**
+- `Ref_g`: the reference analyzer's reading for gas g. Observed when the analyzer is online.
+- `Gas_g`: the **true** level of gas g. Latent; it only exists from Phase 3 on.
+- `S₁…S₅`: sensor readings. `W`: weather (temperature `T`, relative humidity `RH`).
 
-`W` = weather (temperature `T` and relative humidity `RH`). Gases with reference readings: g ∈ {CO, NMHC, NOₓ, NO₂} (C₆H₆ only via the cross-sensitivity extension).
+| Phase | Structure | Gas level is… | Learning | Question it answers |
+|---|---|---|---|---|
+| 1 | Single gas: `Hour → Ref → S₁…S₅ ← W` | the reference reading (observed) | MLE | Baseline: how well do the sensors recover one gas? |
+| 2 | All gases; each sensor has its nominal gas plus cross-sensitivity gases | the reference reading (observed) | MLE | Does modeling several gases and cross-sensitivity help? |
+| 3 | Phase 2 with a latent `Gas_g` inserted above each `Ref_g` | latent; `Ref_g` is a noisy child | EM | Does using hours with missing reference readings help? |
+| 3b | Phase 3 + air quality output `AQ` | latent | none added (AQ is computed) | How well can air quality be predicted from sensors alone? |
+| 4 | Phase 3b chained hour to hour (HMM) | latent, carried over each hour | Baum–Welch | Does temporal structure help? Hour-by-hour AQ. |
+
+Gases: g ∈ {CO, C₆H₆, NOₓ, NO₂}; NMHC added if the EDA shows enough reference data.
 
 ---
 
 ## Phase 1: Single-gas Bayesian network (MLE)
 
-**Structure:** `Hour → Gas`, `Gas → S₁…S₅`, `W → S₁…S₅`. All five sensors are treated as responding to one gas.
-**Observed:** everything. `Gas` is that gas's reference reading, treated as ground truth.
-**Learning:** maximum likelihood (normalized counts) on hours where the gas and sensors are observed.
-**Inference:** P(Gas | Hour, S₁…S₅, W).
+**Structure:** `Hour → Ref`, `Ref → S₁…S₅`, `W → S₁…S₅`. All five sensors are treated as responding to one gas.
+**Observed:** everything. The gas node is the reference reading, treated as ground truth.
+**Learning:** maximum likelihood (normalized counts) on hours where the reference and sensors are observed.
+**Inference:** P(Ref | Hour, S₁…S₅, W).
 **Scope:** fit first for CO; the same model can be fit separately for any gas with reference readings.
 **Figure:** `phase-1.jpg`
 
@@ -30,57 +35,71 @@ Each phase changes **one thing** from the phase before it, so every comparison i
 - Hours are independent of each other.
 - The reference analyzer is error-free.
 
-## Phase 2: One gas per sensor (MLE)
+## Phase 2: All gases with cross-sensitivity (MLE)
 
-**Structure:** a plate over gases. Inside: `Gas_g → S_g`. Outside, shared by all gases: `Hour → every Gas_g`, `W → every S_g`.
+**What changes from Phase 1:** several gases at once, and each sensor can respond to more than one gas.
 
-| Gas | Reference column | Sensor |
+**Structure:** `Hour → every Ref_g`; `W → every sensor`. Each sensor gets:
+- **Nominal edge** (solid): the gas it targets.
+- **Cross-sensitivity edges** (dashed): other gases it also responds to, chosen from EDA correlations.
+
+| Sensor | Nominal gas | Cross-sensitivity (placeholders until the EDA) |
 |---|---|---|
-| CO | `CO(GT)` | `S₁` (PT08.S1) |
-| NMHC | `NMHC(GT)` | `S₂` (PT08.S2) |
-| NOₓ | `NOx(GT)` | `S₃` (PT08.S3) |
-| NO₂ | `NO2(GT)` | `S₄` (PT08.S4) |
+| `S₁` (PT08.S1) | CO | — |
+| `S₂` (PT08.S2) | NMHC (if kept) | CO, C₆H₆ |
+| `S₃` (PT08.S3) | NOₓ | — |
+| `S₄` (PT08.S4) | NO₂ | — |
+| `S₅` (PT08.S5) | O₃ (no reference) | NOₓ |
 
-**Learning:** MLE, counting each CPT on the hours where its own variables are observed (avoids discarding hours where an unrelated gas is missing).
-**Compared to Phase 1:** CO is inferred from `S₁` alone instead of all five sensors. If Phase 1 does better, the other sensors carry real information about CO (the cross-sensitivity argument).
-**Figure:** `phase-2.jpg`
+Cross-sensitivity edges are what give benzene sensor evidence (it has no sensor of its own) and let `S₅` contribute.
+
+**Observed:** everything; there is **no latent node yet**.
+**Learning:** MLE. Each sensor CPT is counted on the hours where that sensor and **all** of its gas parents' references are observed. Sensors with several gas parents therefore have fewer usable hours, which Phase 3 fixes.
+**CPT size:** each sensor's table has (levels)^(gas parents) × (weather levels) rows, so keep cross-sensitivity edges to one or two per sensor. Use Laplace (add-one) smoothing for sparse rows.
+**Figure:** `phase-2.jpg` (multi-gas figure with gray gas nodes labeled `Ref_g`, no white or dashed nodes)
 
 **Open questions for the EDA**
-- **NMHC:** if its reference is mostly missing, drop it (and `S₂` loses its gas).
-- **`S₅` (ozone):** there is no O₃ reference, so `S₅` has no gas parent.
-- **Benzene:** has a reference but no dedicated sensor; see the cross-sensitivity extension.
+- Which cross-sensitivity edges are real (sensor-vs-gas correlations).
+- Whether NMHC has enough reference data to include.
 
 ## Phase 3: Latent gas levels (EM)
 
-**Structure:** Phase 2 with each gas split into a latent true level `Gas_g` and its reference reading: `Gas_g → Ref_g`, `Gas_g → S_g` (inside the plate).
+**What changes from Phase 2:** a latent true level `Gas_g` is inserted above each reference reading. The reference stops being "the truth" and becomes one more noisy, sometimes-missing measurement of it.
+
+**Structure:** `Hour → every Gas_g`; `Gas_g → Ref_g`; nominal and cross-sensitivity edges now come from `Gas_g`; `W → every sensor`.
 **Observed:** `Hour`, sensors, and `W` always; `Ref_g` sometimes; `Gas_g` never.
-**Learning:** EM over all hours. E-step: posterior over the latent levels given whatever is observed (missing references are marginalized). M-step: re-estimate CPTs from expected counts. Initialize P(Ref_g | Gas_g) near the identity so latent states line up with concentration levels.
-**Inference:** P(Gas_g | Hour, sensors, W) with references hidden on test hours.
+**Learning:** EM over **all** hours, including those Phase 2 skipped because a reference was missing. E-step: posterior over the gas levels given whatever is observed. M-step: re-estimate CPTs from expected counts. Initialize P(Ref_g | Gas_g) near the identity so latent states line up with concentration levels.
+**Inference:** P(Gas_g | Hour, sensors, W) with references hidden on test hours. With several connected latent gases this is genuine exact inference (variable elimination); the joint over 4 gases at 3 levels is 81 states, so it stays tractable.
 **Additional assumption:** missing reference values are missing at random.
-**Figure:** `phase-3.jpg`
+**Figure:** `phase-3.jpg` (multi-gas figure: white `Gas_g`, dashed `Ref_g`, solid and dashed sensor edges)
 
-### Optional extension: cross-sensitivity edges
-Add edges from a gas to sensors other than its nominal one, chosen from EDA correlations (placeholders: `Gas_CO → S₂`, `Gas_C6H6 → S₂`, `Gas_NOx → S₅`). This gives benzene sensor evidence and lets `S₅` contribute. Shown by the dashed edges in the multi-gas figure (`cross-sensitivity.jpg`).
+## Phase 3b: Air quality output
 
-## Phase 4: HMM over hours (Baum–Welch)
+**What changes from Phase 3:** a node `AQ` with an edge from every `Gas_g`.
 
-**Structure:** Phase 3 unrolled over time. Each hour is one time slice containing the gas plate and `W`. Each gas's latent level carries over to the same gas next hour: `Gas_g,t−1 → Gas_g,t`. `Hour` is dropped; the transitions replace it.
-**Consequence:** with no edges between gases, this is **one independent HMM per gas**, each with a small chain (3 states at 3 levels), rather than one joint chain over every combination of gas levels.
-**Learning:** Baum–Welch per gas. Missing emissions are skipped (probability 1).
-**Inference:** forward–backward for P(Gas_g,t | all hours); Viterbi for the most likely level sequence.
-**Hypothesis:** neighboring hours help most during reference-analyzer gaps.
-**Figure:** `phase-4.jpg`
-
-## Air quality output
-
-**Node:** `AQ` (or `AQ_t` per hour in Phase 4), a child of the gas-level nodes, outside the gas plate. It is **deterministic**: the worst band across the gases, following how air quality indices rate an hour by its worst pollutant. It has no learned parameters and isn't observed.
-**Added on top of:** Phases 2–4 (in Phase 1 it reduces to the single gas's band). Because nothing is learned, it can be computed after training without refitting.
-**Query:** P(AQ_t | sensors, W), combining each gas's posterior; in Phase 4, an hour-by-hour AQ timeline.
+**Node:** `AQ` is **deterministic**: the worst band across the gases, following how air quality indices rate an hour by its worst pollutant. It has no learned parameters and is never observed (white, drawn as a double circle or with a distinct outline).
+**Nothing is retrained:** AQ is computed from the Phase 3 posteriors.
+**Query:** P(AQ | Hour, sensors, W).
 **Evaluation:** compute the true AQ from reference readings on held-out hours with the same rule, then compare with the prediction from sensors alone.
 
 **Requirements**
-- **Standard-based bins** for every gas feeding AQ, so "fair" means the same thing for each gas. This must be decided at the start, since bins are shared by all phases.
+- **Standard-based bins** for every gas feeding AQ, so "fair" means the same thing for each gas. Decide this at the start, since bins are shared by all phases.
 - **Only gases with usable hourly standards feed AQ.** NO₂ has hourly bands; CO and benzene standards use 8-hour or long-term averages. Either restrict AQ to those gases or state the averaging mismatch as a limitation.
+
+**Figure:** `phase-3.jpg` with `AQ` added (blue/pink AQ edges)
+
+## Phase 4: HMM over hours (Baum–Welch)
+
+**What changes from Phase 3b:** each gas's latent level carries over to the next hour.
+
+**Structure:** Phase 3b unrolled over time. Each hour is a time slice containing the gas nodes, references, sensors, `W`, and `AQ_t`. Transitions: `Gas_g,t−1 → Gas_g,t`. `Hour` is dropped; the transitions replace it.
+**Coupling:** because cross-sensitivity lets one sensor depend on several gases, the gas chains are **not independent**: this is a factorial HMM. Exact forward–backward over the joint gas state (81 states at 3 levels with 4 gases) is still tractable for ~9,000 hours.
+**Fallback:** if the coupled model is too slow or unstable, drop the cross-sensitivity edges for Phase 4. The chains then separate into one small HMM per gas.
+**Learning:** Baum–Welch. Missing emissions are skipped (probability 1).
+**Inference:** forward–backward for P(Gas_g,t | all hours) and P(AQ_t | all hours); Viterbi for the most likely sequence.
+**Output:** an hour-by-hour air quality timeline from the sensors alone.
+**Hypothesis:** neighboring hours help most during reference-analyzer gaps.
+**Figure:** `phase-4.jpg` (the figure's plate over gases shows the nominal edges; the caption notes the cross-sensitivity edges)
 
 ---
 
@@ -88,7 +107,7 @@ Add edges from a gas to sensors other than its nominal one, chosen from EDA corr
 
 - **Data module:** one loader (`-200` → NaN), one discretization, one time-based split (contiguous blocks, so neighboring hours don't leak between train and test).
 - **Evaluation:** on held-out hours with a reference reading, hide the reference, infer it, and report accuracy of the most probable level, held-out log-likelihood, and a confusion matrix. Report AQ accuracy the same way.
-- **Configurations to sweep:** discretization levels (3 / 5 / 7); quantile vs. air-quality-standard bins; `T + RH` vs. `T + AH`; with vs. without weather edges; with vs. without cross-sensitivity edges.
+- **Configurations to sweep:** discretization levels (3 / 5 / 7); quantile vs. air-quality-standard bins; `T + RH` vs. `T + AH`; with vs. without weather edges; nominal-only vs. with cross-sensitivity edges.
 
 ---
 <sub>**AI use:** Roadmap drafted with assistance from Claude (Anthropic, Claude Opus 5.5) and reviewed and edited by Kiernan.</sub>
