@@ -2,9 +2,9 @@
 \label{sec:methodology}
 
 % Outline (~1--2 paragraphs, maybe one small structure figure):
-% - Model 1 (core): Bayesian network. Latent node = true concentration;
-%   children = sensor readings; weather (temp, humidity) as parents of sensors
-%   (cross-sensitivity). Reference reading = noisy/partially observed child.
+- Model 1 (core): Bayesian network. Latent node = true concentration;
+  children = sensor readings; weather (temp, humidity) as parents of sensors
+  (cross-sensitivity). Reference reading = noisy/partially observed child.
 % - Learning: MLE where fully observed; EM \citep{dempster1977em} to handle
 %   the missing reference values and the latent node.
 % - Inference: exact inference (variable elimination) for
