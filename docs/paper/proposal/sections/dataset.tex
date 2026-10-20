@@ -1,16 +1,19 @@
 \section{Dataset Source}
 \label{sec:dataset}
 
-% Outline (~1 short paragraph):
-% - Source: UCI Air Quality \citep{vito2008airquality}, collected for
-%   \citet{devito2008calibration}. CC BY 4.0.
-% - Contents: 9,358 hourly averages, Mar 2004 -- Feb 2005, one multisensor
-%   device at road level in an Italian city. 5 metal-oxide sensor responses
-%   (PT08.S1--S5), reference analyzer values (CO, NMHC, benzene, NOx, NO2),
-%   temperature, relative / absolute humidity.
-% - Known issues: missing values coded as -200 (reference gaps motivate EM);
-%   NMHC reference mostly unusable; sensor drift and cross-sensitivity.
-% - Planned preprocessing: replace -200 with missing, discretize continuous
-%   variables (bin scheme TBD), time-based train/test split.
+% ~1/4 page: one paragraph, 4--5 sentences. Fill the bracketed numbers from
+% the EDA task once the group decides.
 
-\todo{Dataset description and planned preprocessing.}
+\todo{One paragraph, your words:
+  (1) Source: UCI Air Quality dataset \citep{vito2008airquality}, collected
+      for \citet{devito2008calibration}; CC BY 4.0.
+  (2) Contents: 9,358 hourly averages, Mar 2004 -- Feb 2005, from one
+      roadside multisensor device in an Italian city: 5 metal-oxide sensor
+      responses, co-located reference-analyzer concentrations (CO, NMHC,
+      benzene, NO$_x$, NO$_2$), temperature, and humidity.
+  (3) Known issues: missing values coded as $-200$ (reference gaps: [X\%] of
+      the target missing, longest gap [Y] hours); documented sensor drift and
+      cross-sensitivity; [NMHC reference mostly missing, if confirmed].
+  (4) Preprocessing: replace $-200$ with missing; discretize each variable
+      into [k] levels ([quantile / standard-based] bins); time-based
+      train/test split so neighboring hours don't leak between sets.}

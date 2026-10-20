@@ -1,18 +1,16 @@
 \section{Problem Description}
 \label{sec:problem}
 
-% Outline (~1 paragraph):
-% - The question: can we infer the true pollutant concentration (hidden) from
-%   cheap, noisy, drifting chemical sensors when the reference analyzer is
-%   intermittently missing?
-% - Why it matters: low-cost sensors enable dense monitoring, but their
-%   readings are unreliable without calibration; reference stations are sparse.
-% - Why probabilistic: true concentration is latent; sensors are noisy
-%   observations of it; missing reference values call for EM; pollution evolves
-%   over time (HMM extension).
-% - Concrete questions we will answer, e.g.:
-%     * How well can P(true CO | sensor readings, weather) recover held-out
-%       reference values?
-%     * Does modeling time (HMM) improve over a static Bayes net?
+% ~1/4 page: one paragraph, 4--5 sentences.
 
-\todo{Problem statement and motivation.}
+\todo{One paragraph, your words:
+  (1) The question: can we estimate hourly air quality from cheap, noisy
+      chemical sensors, using a reference analyzer that is often offline?
+  (2) Why it matters: low-cost sensors allow dense monitoring, but they drift,
+      react to weather, and respond to more than their target gas; reference
+      stations are expensive and sparse.
+  (3) Why it is probabilistic: the true gas level is hidden and the sensors
+      and reference are noisy observations of it (a Bayesian network); missing
+      reference readings call for EM; pollution evolves hour to hour (HMM).
+  (4) 1--2 concrete questions, e.g.\ how well do the sensors alone recover the
+      reference level, and does modeling time improve on a static network?}
