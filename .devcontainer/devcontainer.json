@@ -1,9 +1,9 @@
 {
 	"name": "CSE 250 Project",
 	"build": {
-	"dockerfile": "Dockerfile",
-	"context": ".."
-},
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1.1.3": {},
@@ -36,7 +36,7 @@
 		}
 	},
 	"remoteUser": "vscode",
-	"initializeCommand": "touch .devcontainer/.env",
-	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes",
-	"runArgs": ["--env-file", ".devcontainer/.env"]
+	// "initializeCommand": "touch .devcontainer/.env",
+	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes"
+	// "runArgs": ["--env-file", ".devcontainer/.env"]
 }
