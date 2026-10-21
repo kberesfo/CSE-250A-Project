@@ -36,7 +36,7 @@
 		}
 	},
 	"remoteUser": "vscode",
-	"initializeCommand": "touch .devcontainer/.env",
+	// "initializeCommand": "touch .devcontainer/.env",
 	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes",
-	"runArgs": ["--env-file", ".devcontainer/.env"]
+	// "runArgs": ["--env-file", ".devcontainer/.env"]
 }
