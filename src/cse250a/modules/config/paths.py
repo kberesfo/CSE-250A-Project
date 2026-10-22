@@ -9,8 +9,19 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 class PathSettings(BaseSettings):
     """Filesystem locations. Override with DATA_DIR, RESULTS_DIR, FIGURES_DIR."""
 
-    model_config = SettingsConfigDict(env_file=REPO_ROOT / ".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=REPO_ROOT / ".env", extra="ignore")
 
     data_dir: Path = REPO_ROOT / "data"
     results_dir: Path = REPO_ROOT / "results"
     figures_dir: Path = REPO_ROOT / "figures"
+
+    @property
+    def air_quality_csv(self) -> Path:
+        return self.data_dir / "air_quality" / "AirQualityUCI.csv"
+
+    def figure(self, notebook: str, name: str) -> Path:
+        """Path for a generated figure: figures/<notebook>/<name>. Creates the folder."""
+        d = self.figures_dir / notebook
+        d.mkdir(parents=True, exist_ok=True)
+        return d / name
