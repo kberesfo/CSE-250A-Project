@@ -1,9 +1,9 @@
 {
 	"name": "CSE 250 Project",
 	"build": {
-	"dockerfile": "Dockerfile",
-	"context": ".."
-},
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1.1.3": {},
@@ -31,7 +31,15 @@
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-				"jupyter.notebookFileRoot": "${fileDirname}"
+				"jupyter.notebookFileRoot": "${fileDirname}",
+				"notebook.codeActionsOnSave": {
+					"source.organizeImports.ruff": "explicit"
+				},
+				"[python]": {
+					"editor.codeActionsOnSave": {
+						"source.organizeImports.ruff": "explicit"
+					}
+				}
 			}
 		}
 	},
