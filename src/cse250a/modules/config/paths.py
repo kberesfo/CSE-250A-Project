@@ -19,3 +19,9 @@ class PathSettings(BaseSettings):
     @property
     def air_quality_csv(self) -> Path:
         return self.data_dir / "air_quality" / "AirQualityUCI.csv"
+
+    def figure(self, notebook: str, name: str) -> Path:
+        """Path for a generated figure: figures/<notebook>/<name>. Creates the folder."""
+        d = self.figures_dir / notebook
+        d.mkdir(parents=True, exist_ok=True)
+        return d / name
