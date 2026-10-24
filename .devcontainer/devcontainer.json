@@ -31,7 +31,15 @@
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-				"jupyter.notebookFileRoot": "${fileDirname}"
+				"jupyter.notebookFileRoot": "${fileDirname}",
+				"notebook.codeActionsOnSave": {
+					"source.organizeImports.ruff": "explicit"
+				},
+				"[python]": {
+					"editor.codeActionsOnSave": {
+						"source.organizeImports.ruff": "explicit"
+					}
+				}
 			}
 		}
 	},
