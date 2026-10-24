@@ -2,9 +2,9 @@
 \label{sec:methodology}
 
 % Outline (~1--2 paragraphs, maybe one small structure figure):
-- Model 1 (core): Bayesian network. Latent node = true concentration;
-  children = sensor readings; weather (temp, humidity) as parents of sensors
-  (cross-sensitivity). Reference reading = noisy/partially observed child.
+%- Model 1 (core): Bayesian network. Latent node = true concentration;
+%  children = sensor readings; weather (temp, humidity) as parents of sensors
+% (cross-sensitivity). Reference reading = noisy/partially observed child.
 % - Learning: MLE where fully observed; EM \citep{dempster1977em} to handle
 %   the missing reference values and the latent node.
 % - Inference: exact inference (variable elimination) for
@@ -18,3 +18,7 @@
 %   held-out reference values; qualitative check of learned CPTs / states.
 
 \todo{Model, learning and inference algorithms, experiments, and evaluation.}
+%Our core model will be a Bayesian network representing the relationships between the sensor readings, the weather (temperature, humidity), and the 
+%We will be using MLE where the reference values are available, and EM where there are missing values. 
+%We will be using variable elimination with our probabilistic inferences to estimate the true pollution levels given the sensor readings and weather conditions.
+%Our extension model will be a HMM over hours. 
