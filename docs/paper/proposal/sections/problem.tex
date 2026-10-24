@@ -3,16 +3,17 @@
 
 % ~1/4 page: one paragraph, 4--5 sentences.
 
-\todo{One paragraph, your words:
-  (1) The question: can we estimate hourly air quality from cheap, noisy
-      chemical sensors, using a reference analyzer that is often offline?
-  (2) Why it matters: low-cost sensors allow dense monitoring, but they drift,
-      react to weather, and respond to more than their target gas; reference
-      stations are expensive and sparse.
-  (3) Why it is probabilistic: the true gas level is hidden and the sensors
-      and reference are noisy observations of it (a Bayesian network); missing
-      reference readings call for EM; pollution evolves hour to hour (HMM).
-  (4) 1--2 concrete questions, e.g.\ how well do the sensors alone recover the
-      reference level, and does modeling time improve on a static network?}
-
+    This project explores whether hourly air quality can be estimated from noisy, 
+low-cost chemical sensor measurements when reference analyzer readings are unavailable.
+    Reliable hourly air quality estimates from low-cost sensors can help identify pollution trends and enable 
+more affordable, widespread monitoring, but low-cost sensors are affected by sensor drift, weather conditions, 
+and cross-sensitivity to other gases, while reference monitoring stations are expensive and sparsely distributed.
+    A probabilistic approach is appropriate because true pollutant concentrations are unobserved and must be 
+inferred from noisy sensor measurements and available reference readings.
+    We will use Maximum Likelihood Estimation (MLE) to learn baseline models, Expectation Maximization (EM) 
+to account for missing reference readings, and Hidden Markov Model (HMM) to capture time dependencies in 
+pollutant concentrations.
+    We will also investigate how accurately low-cost sensor measurements can estimate pollutant concentrations 
+and derive hourly air-quality ratings, and whether modeling time dependencies improves hourly air quality 
+estimates compared with a static model.
       
