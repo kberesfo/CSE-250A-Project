@@ -3,7 +3,6 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar, Self
 
-import numpy as np
 import pandas as pd
 
 from cse250a.modules.eval.metrics import score
