@@ -1,0 +1,22 @@
+% phase-macros.tex — shared macros for per-phase Methodology sections.
+% Loaded by common/preamble.tex (after graphicx), so every main.tex gets them.
+
+% Phase heading with an automatic label: \phasesection{1}{Single-gas BN (MLE)}
+% Creates \subsection{Phase 1: ...} labeled sec:phase-1.
+\newcommand{\phasesection}[2]{%
+  \subsection{Phase #1: #2}\label{sec:phase-#1}}
+
+% Bold run-in heading for each part of a phase: \phasepart{Goal}
+\newcommand{\phasepart}[1]{\paragraph{#1.}}
+
+% Phase figure: \phasefigure{1}{phase-1.jpg}{Caption text.}
+% Optional width (default 0.6\linewidth), e.g. for the wide HMM figure:
+%   \phasefigure[\linewidth]{4}{phase-4.jpg}{Caption text.}
+% Labeled fig:phase-<n>; reference with Figure~\ref{fig:phase-1}.
+\newcommand{\phasefigure}[4][0.6\linewidth]{%
+  \begin{figure}[t]
+    \centering
+    \includegraphics[width=#1]{#3}
+    \caption{#4}
+    \label{fig:phase-#2}
+  \end{figure}}

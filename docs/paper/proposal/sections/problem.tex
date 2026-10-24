@@ -1,18 +1,19 @@
 \section{Problem Description}
 \label{sec:problem}
 
-% Outline (~1 paragraph):
-% - The question: can we infer the true pollutant concentration (hidden) from
-%   cheap, noisy, drifting chemical sensors when the reference analyzer is
-%   intermittently missing?
-% - Why it matters: low-cost sensors enable dense monitoring, but their
-%   readings are unreliable without calibration; reference stations are sparse.
-% - Why probabilistic: true concentration is latent; sensors are noisy
-%   observations of it; missing reference values call for EM; pollution evolves
-%   over time (HMM extension).
-% - Concrete questions we will answer, e.g.:
-%     * How well can P(true CO | sensor readings, weather) recover held-out
-%       reference values?
-%     * Does modeling time (HMM) improve over a static Bayes net?
+% ~1/4 page: one paragraph, 4--5 sentences.
 
-\todo{Problem statement and motivation.}
+    This project explores whether hourly air quality can be estimated from noisy, 
+low-cost chemical sensor measurements when reference analyzer readings are unavailable.
+    Reliable hourly air quality estimates from low-cost sensors can help identify pollution trends and enable 
+more affordable, widespread monitoring, but low-cost sensors are affected by sensor drift, weather conditions, 
+and cross-sensitivity to other gases~\citep{devito2008calibration}, while reference monitoring stations are expensive and sparsely distributed.
+    A probabilistic approach is appropriate because true pollutant concentrations are unobserved and must be 
+inferred from noisy sensor measurements and available reference readings.
+    We will use Maximum Likelihood Estimation (MLE) to learn baseline models, Expectation Maximization (EM) 
+to account for missing reference readings, and Hidden Markov Model (HMM) to capture time dependencies in 
+pollutant concentrations.
+    We will also investigate how accurately low-cost sensor measurements can estimate pollutant concentrations 
+and derive hourly air-quality ratings, and whether modeling time dependencies improves hourly air quality 
+estimates compared with a static model.
+      

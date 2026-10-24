@@ -1,20 +1,19 @@
 \section{Methodology}
 \label{sec:methodology}
 
-% Outline (~1--2 paragraphs, maybe one small structure figure):
-% - Model 1 (core): Bayesian network. Latent node = true concentration;
-%   children = sensor readings; weather (temp, humidity) as parents of sensors
-%   (cross-sensitivity). Reference reading = noisy/partially observed child.
-% - Learning: MLE where fully observed; EM \citep{dempster1977em} to handle
-%   the missing reference values and the latent node.
-% - Inference: exact inference (variable elimination) for
-%   P(true level | sensors, weather).
-% - Model 2 (extension): HMM over hours; hidden state = pollution level,
-%   emissions = discretized sensor readings. Baum--Welch to learn, Viterbi /
-%   forward--backward to infer \citep{rabiner1989hmm}.
-% - Experiments to compare: number of bins / hidden states, network
-%   structures (with vs. without weather edges), static BN vs. HMM.
-% - Evaluation: held-out log-likelihood; accuracy of inferred level vs.
-%   held-out reference values; qualitative check of learned CPTs / states.
-
-\todo{Model, learning and inference algorithms, experiments, and evaluation.}
+Our model is developed in four phases of increasing complexity, each adding
+one feature to the network. We begin with a single gas whose reference
+reading is the parent of all five sensors, to test how well the sensors fit
+the data. We then add the remaining gases and cross-sensitivity edges,
+learning the CPTs with maximum likelihood. Then, we make the true gas levels
+latent, learn them with EM~\citep{dempster1977em}, and compute hourly air
+quality as the worst band across gases(\cref{fig:model},
+\cref{app:model}); finally, as a reach goal, we extend
+the model to an HMM over hours, learned with Baum--Welch~\citep{rabiner1989hmm}.
+In each phase, we use exact inference to compute the distribution over a gas's
+level given the sensor readings and weather. To evaluate, we train on one block
+of time and test on a later, held-out block: on test hours with a reference
+reading, we hide it, infer it from the sensors, and report accuracy and
+log-likelihood against a baseline that predicts from the hour of day alone.
+We also compare configurations, varying the number of discretization levels
+and including or excluding the cross-sensitivity edges.
