@@ -2,6 +2,8 @@
 % Due: Mon Oct 26, 11:59 PM PT (Gradescope). Limit: 1 page.
 % Required: Problem Description, Dataset Source, Methodology.
 %
+% Page layout: title page | 1-page proposal | references | appendix
+%
 % Build:  cd paper/proposal && latexmk -pdf main.tex
 \documentclass[11pt]{article}
 \input{../common/preamble}
@@ -9,20 +11,38 @@
 \title{Estimating True Air Pollution from Noisy Low-Cost Sensors\\
        \large Project Proposal --- CSE 150A/250A, Fall 2026}
 \input{../common/authors}
-\date{October 19 2026}
+\date{October 26 2026}
 
 \begin{document}
 \maketitle
 \thispagestyle{empty}  % no page number on the title page
-\newpage               % title page, then the 1-page proposal
+\clearpage             % title page, then the 1-page proposal
 
 \input{sections/problem}
 \input{sections/dataset}
 \input{sections/methodology}
 
+% ---- References (own page, outside the 1-page proposal) ----
+\clearpage
 % Keep \nocite{*} until the sections contain real \cite{} commands: with no
 % citations at all, BibTeX produces an empty bibliography and the build fails.
+\nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{../references}
+
+% ---- Appendix (own page, outside the 1-page proposal) ----
+\clearpage
+\appendix
+\section{Model Structure}
+\label{app:model}
+
+% The exported image should NOT include its own caption or figure number;
+% re-export from Figma without that text box so this caption is the only one.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\linewidth]{phase-3-b.jpg}
+  \caption{Full static model, before the HMM extension.}
+  \label{fig:model}
+\end{figure}
 
 \end{document}

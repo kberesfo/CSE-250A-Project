@@ -7,7 +7,8 @@ reading is the parent of all five sensors, to test how well the sensors fit
 the data. We then add the remaining gases and cross-sensitivity edges,
 learning the CPTs with maximum likelihood. Then, we make the true gas levels
 latent, learn them with EM~\citep{dempster1977em}, and compute hourly air
-quality as the worst band across gases; finally, as a reach goal, we extend
+quality as the worst band across gases(\cref{fig:model},
+\cref{app:model}); finally, as a reach goal, we extend
 the model to an HMM over hours, learned with Baum--Welch~\citep{rabiner1989hmm}.
 In each phase, we use exact inference to compute the distribution over a gas's
 level given the sensor readings and weather. To evaluate, we train on one block

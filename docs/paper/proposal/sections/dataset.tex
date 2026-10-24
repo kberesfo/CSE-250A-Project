@@ -1,7 +1,7 @@
 \section{Dataset Source}
 \label{sec:dataset}
 
-We are using the UCI Air Quality dataset, which was collected by a roadside multisensor device in an Italian city from March 2004 to February 2005. 
+We are using the UCI Air Quality dataset~\citep{vito2008airquality}, which was collected by a roadside multisensor device in an Italian city from March 2004 to February 2005. 
 The dataset contains 9,358 hourly averaged observations from five metal-oxide chemical sensors, reference-analyzer concentrations of carbon monoxide (CO), non-methanic hydrocarbons (NMHC), benzene, nitrogen oxides (NOx), and nitrogen dioxide (NO$_2$), as well as temperature and relative humidity.
 Some known limitations include missing values encoded as $-200$, NMHC being mostly unusable because of missing data (90.2\% of hours, according to our analysis), and sensor drift and cross-sensitivity. 
 During preprocessing, we plan to replace values encoded as $-200$ with a proper missing-value indicator, and continuous variables may be discretized into categories suitable for the probabilistic models.
