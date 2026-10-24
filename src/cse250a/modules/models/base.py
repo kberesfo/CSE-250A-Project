@@ -1,28 +1,36 @@
 # models/base.py
+# modules/models/base.py
 from abc import ABC, abstractmethod
 from typing import ClassVar, Self
 
 import numpy as np
 import pandas as pd
 
+from cse250a.modules.eval.metrics import score
+
 
 class Model(ABC):
+    """Base for all models. Models receive already-binned DataFrames and have no
+    knowledge of config, files, or splits."""
+
     name: ClassVar[str]
 
-    @abstractmethod
-    def fit(self, train: pd.DataFrame, val: pd.DataFrame | None = None) -> Self:
-        """Learn parameters from discretized training data."""
+    def __init__(self, target: str):
+        self.target = target
 
     @abstractmethod
-    def predict_proba(self, data: pd.DataFrame, target: str) -> pd.DataFrame:
+    def fit(self, train: pd.DataFrame) -> Self:
+        """Learn parameters from binned training data."""
+
+    @abstractmethod
+    def predict_proba(self, data: pd.DataFrame) -> pd.DataFrame:
         """P(target | evidence) per hour: one row per hour, one column per bin."""
 
-    # concrete: every model gets these for free
-    def predict(self, data, target) -> pd.Series:
-        return self.predict_proba(data, target).idxmax(axis=1)
+    def predict(self, data: pd.DataFrame) -> pd.Series:
+        """Most likely bin per hour."""
+        return self.predict_proba(data).idxmax(axis=1)
 
-    def log_likelihood(self, data, target) -> float:
-        p = self.predict_proba(data, target)
-        y = data[target]
-        mask = y.notna()
-        return float(np.log(p[mask].to_numpy()[np.arange(mask.sum()), y[mask].astype(int)]).sum())
+    def evaluate(self, data: pd.DataFrame) -> dict:
+        """Score on hours where the target is observed. Same metrics for every model."""
+        observed = data[data[self.target].notna()]
+        return score(observed[self.target], self.predict_proba(observed))
