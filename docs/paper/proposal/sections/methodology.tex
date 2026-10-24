@@ -1,22 +1,6 @@
 \section{Methodology}
 \label{sec:methodology}
 
-% Outline (~1--2 paragraphs, maybe one small structure figure):
-%- Model 1 (core): Bayesian network. Latent node = true concentration;
-%  children = sensor readings; weather (temp, humidity) as parents of sensors
-% (cross-sensitivity). Reference reading = noisy/partially observed child.
-% - Learning: MLE where fully observed; EM \citep{dempster1977em} to handle
-%   the missing reference values and the latent node.
-% - Inference: exact inference (variable elimination) for
-%   P(true level | sensors, weather).
-% - Model 2 (extension): HMM over hours; hidden state = pollution level,
-%   emissions = discretized sensor readings. Baum--Welch to learn, Viterbi /
-%   forward--backward to infer \citep{rabiner1989hmm}.
-% - Experiments to compare: number of bins / hidden states, network
-%   structures (with vs. without weather edges), static BN vs. HMM.
-% - Evaluation: held-out log-likelihood; accuracy of inferred level vs.
-%   held-out reference values; qualitative check of learned CPTs / states.
-
 Our model is developed in four phases of increasing complexity, each adding
 one feature to the network. We begin with a single gas whose reference
 reading is the parent of all five sensors, to test how well the sensors fit
