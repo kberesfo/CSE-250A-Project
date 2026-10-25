@@ -37,6 +37,19 @@ class Phase2(DiscreteBN):
 
     @property
     def structure(self) -> dict[str, list[str]]:
+        """Phase 2 network: Hour → each gas → sensors (nominal + cross-sensitivity) ← weather.
+
+        Every gas in ``GASES`` depends on hour of day. Each sensor depends on its
+        nominal gas (``NOMINAL``), any cross-sensitivity gases (``CROSS``, only
+        when ``cross=True``), and the weather variables. S5 has no nominal gas
+        (there is no O3 reference), so with ``cross=False`` it depends on weather
+        only and carries no information about any gas.
+
+        Returns:
+            dict[str, list[str]]: Node name → list of parent names. Keys are every
+            gas and every sensor; ``hour`` and the weather columns are root nodes
+            and have no entries.
+        """
         gases = {g: [self.hour_col] for g in GASES}
         sensors = {
             s: [*NOMINAL[s], *(CROSS.get(s, []) if self.cross else []), *self.weather]

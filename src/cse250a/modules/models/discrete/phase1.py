@@ -28,6 +28,18 @@ class Phase1(DiscreteBN):
 
     @property
     def structure(self) -> dict[str, list[str]]:
+        """Phase 1 network: Hour → target → S1…S5 ← weather.
+
+        The target gas depends only on hour of day. Every sensor depends on the
+        target gas and the weather variables, so all five sensors are treated as
+        responding to the one gas (no cross-sensitivity until Phase 2). With
+        ``weather=[]``, each sensor has the target as its only parent.
+
+        Returns:
+            dict[str, list[str]]: Node name → list of parent names. Keys are the
+            target and the five sensor columns; ``hour`` and the weather columns
+            are root nodes and have no entries.
+        """
         return {
             self.target: [self.hour_col],
             **{s: [self.target, *self.weather] for s in SENSORS},
