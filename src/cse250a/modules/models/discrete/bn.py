@@ -8,7 +8,8 @@ from ..base import Model
 
 
 class DiscreteBN(Model):
-    """Generic discrete Bayesian network over binned variables.
+    """
+    Generic discrete Bayesian network over binned variables.
 
     Subclasses define STRUCTURE (node → list of parents). This class learns one CPT per node
     by MLE with Laplace smoothing and answers P(target | everything else observed).

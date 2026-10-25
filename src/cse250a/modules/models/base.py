@@ -5,7 +5,7 @@ from typing import ClassVar, Self
 
 import pandas as pd
 
-from cse250a.modules.eval.metrics import score
+from ..eval import score
 
 
 class Model(ABC):
