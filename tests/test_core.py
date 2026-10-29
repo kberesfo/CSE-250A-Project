@@ -6,19 +6,22 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cse250a.modules.core.columns import HOUR, Gas, Sensor, Weather
-from cse250a.modules.core.cpt import CPT
-from cse250a.modules.core.messages import Messages
-from cse250a.modules.core.network import (
+from cse250a.modules.core import (
+    CPT,
     GASES,
+    HOUR,
     SENSORS,
     WEATHER,
+    FitResult,
+    Gas,
+    Messages,
     Network,
+    Sensor,
+    Weather,
     multi_gas_network,
     sensor_gases,
     single_gas_network,
 )
-from cse250a.modules.eval import FitResult
 
 # ── columns ────────────────────────────────────────────────────────────────────
 

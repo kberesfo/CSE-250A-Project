@@ -1,5 +1,7 @@
-from .phase1 import Phase1
+from .bn import DiscreteBN
+from .latent import LatentBN
 
 __all__ = [
-    "Phase1",
+    "DiscreteBN",
+    "LatentBN",
 ]

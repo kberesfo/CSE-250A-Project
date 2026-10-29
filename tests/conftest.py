@@ -14,10 +14,9 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-from cse250a.modules.models.discrete.bn import DiscreteBN
-from cse250a.modules.models.discrete.latent import LatentBN
 
-from cse250a.modules.core.cpt import CPT
+from cse250a.modules.core import CPT
+from cse250a.modules.models import DiscreteBN, LatentBN
 
 # ── tiny networks ──────────────────────────────────────────────────────────────
 # Same shape as the phases: hour → gas → sensors ← weather.
@@ -35,12 +34,34 @@ LATENT_CARDS = {"H": 2, "W": 2, "Z": 2, "R": 2, "A": 2, "B": 3}
 LATENT_EVIDENCE = ["H", "W", "A", "B"]
 
 
-def make_bn(structure=STATIC, target="G", evidence=STATIC_EVIDENCE, cards=STATIC_CARDS, alpha=1.0):
-    return DiscreteBN(structure, target=target, evidence=evidence, cards=cards, alpha=alpha)
+def make_bn(
+    structure=STATIC,
+    target="G",
+    evidence=STATIC_EVIDENCE,
+    cards=STATIC_CARDS,
+    alpha=1.0,
+):
+    return DiscreteBN(
+        structure, target=target, evidence=evidence, cards=cards, alpha=alpha
+    )
 
 
-def make_latent(structure=LATENT, target="R", evidence=LATENT_EVIDENCE, cards=LATENT_CARDS, latent=("Z",), **kw):
-    return LatentBN(structure, target=target, evidence=evidence, cards=cards, latent=list(latent), **kw)
+def make_latent(
+    structure=LATENT,
+    target="R",
+    evidence=LATENT_EVIDENCE,
+    cards=LATENT_CARDS,
+    latent=("Z",),
+    **kw,
+):
+    return LatentBN(
+        structure,
+        target=target,
+        evidence=evidence,
+        cards=cards,
+        latent=list(latent),
+        **kw,
+    )
 
 
 def topo(structure):
@@ -98,7 +119,10 @@ def _assignments(structure, cards, cpts, row):
     known = {k: int(v) for k, v in row.items() if not pd.isna(v)}
     for states in itertools.product(*[range(cards[n]) for n in unknown]):
         a = {**known, **dict(zip(unknown, states, strict=True))}
-        p = math.prod(cpts[n].table[tuple(a[q] for q in structure[n]) + (a[n],)] for n in structure)
+        p = math.prod(
+            cpts[n].table[tuple(a[q] for q in structure[n]) + (a[n],)]
+            for n in structure
+        )
         yield a, p
 
 
@@ -113,7 +137,10 @@ def brute_posterior(structure, cards, cpts, data, node):
 
 
 def brute_loglik(structure, cards, cpts, data):
-    return sum(math.log(sum(p for _, p in _assignments(structure, cards, cpts, row.to_dict()))) for _, row in data.iterrows())
+    return sum(
+        math.log(sum(p for _, p in _assignments(structure, cards, cpts, row.to_dict())))
+        for _, row in data.iterrows()
+    )
 
 
 def brute_expected_counts(structure, cards, cpts, data):

@@ -1,4 +1,4 @@
-# modules/models/discrete/bn.py
+# modules/models/bn.py
 from collections.abc import Sequence
 from typing import Self
 

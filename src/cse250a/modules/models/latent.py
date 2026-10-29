@@ -1,11 +1,13 @@
-# modules/models/discrete/latent.py
+# modules/models/latent.py
 from collections.abc import Sequence
 from typing import Self
 
 import numpy as np
 import pandas as pd
 
-from .bn import CPT, DiscreteBN
+from cse250a.modules.core import CPT
+
+from .bn import DiscreteBN
 
 
 class LatentBN(DiscreteBN):

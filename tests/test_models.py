@@ -18,8 +18,7 @@ from conftest import (
     shape,
 )
 
-from cse250a.modules.models.base import Model
-from cse250a.modules.models.baselines import HourOnlyBaseline, PersistenceBaseline
+from cse250a.modules.models import HourOnlyBaseline, Model, PersistenceBaseline
 
 # ── the Model contract (implemented: these pass now) ───────────────────────────
 
