@@ -33,6 +33,7 @@
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
 				"jupyter.notebookFileRoot": "${fileDirname}",
+				"todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
 				"notebook.codeActionsOnSave": {
 					"notebook.source.organizeImports.ruff": "explicit"
 				},
