@@ -4,7 +4,17 @@ import pandas as pd
 
 
 def score(y_true: pd.Series, proba: pd.DataFrame) -> dict:
-    """Metrics for binned predictions. `proba` columns are bin labels; rows align with y_true."""
+    """
+    Metrics for binned predictions. `proba` columns are bin labels; rows align with y_true.
+
+    Args:
+        y_true (pd.Series): _description_
+        proba (pd.DataFrame): _description_
+
+    Returns:
+        dict: _description_
+    """
+
     y = y_true.astype(int).to_numpy()
     p = proba.to_numpy()
     cols = proba.columns.to_numpy()
