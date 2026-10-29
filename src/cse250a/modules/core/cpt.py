@@ -22,16 +22,122 @@ class CPT:
     def from_counts(
         cls, node: str, parents: Sequence[str], counts: np.ndarray, alpha: float
     ) -> "CPT":
-        """M-step: add `alpha` to every cell, normalize over the last axis.
-        A parent combination with no counts (only possible when alpha = 0) becomes
-        uniform instead of NaN."""
-        raise NotImplementedError
+        """
+        Build a CPT from counts: the M-step shared by MLE and EM.
+
+        Adds `alpha` to every cell, then normalizes each parent combination so it sums
+        to 1 over the node's states:
+
+            P(node = j | parents) = (n_j + alpha) / (N + k * alpha)
+
+        where n_j is the count for node state j, N is the total count for that parent
+        combination, and k is the number of node states. A parent combination with no
+        counts at all (only possible when alpha = 0) becomes uniform (1/k) instead of NaN.
+
+        Args:
+            node (str): Name of the node this CPT describes.
+            parents (Sequence[str]): Names of the node's parents, in the same order as
+                the leading axes of `counts`.
+            counts (ArrayLike): Counts with shape (*parent cards, node card): one axis
+                per parent, then one for the node. counts[p1, ..., pm, j] is how many
+                rows had parents = (p1, ..., pm) and node = j. Hard counts for MLE,
+                expected (fractional) counts for EM.
+            alpha (float): Pseudo-count added to every cell (Laplace smoothing). It
+                acts as if each node state was seen alpha extra times for every parent
+                combination. 0 gives the plain MLE.
+
+        Raises:
+            ValueError: If counts doesn't have len(parents) + 1 axes.
+
+        Returns:
+            CPT: table[p1, ..., pm, j] = P(node = j | parents = (p1, ..., pm)).
+
+        Example:
+                                        S1 bin 0   S1 bin 1   S1 bin 2
+                    CO = 0, T = 0     [   ...                         ]
+                    CO = 0, T = 1     [   ...                         ]
+                    CO = 0, T = 2     [   ...                         ]
+                    CO = 1, T = 0     [   ...                         ]
+                    ...                                                 ← 3 × 3 = 9 rows
+                    CO = 2, T = 2     [   ...                         ]
+        """
+        # robustness
+        counts = np.asanyarray(counts)
+
+        # add alpha to
+        smoothed = counts + alpha
+        # sums across each row, one total per parent
+        totals = smoothed.sum(axis=-1, keepdims=True)
+        # count cardinality of variable (num bins)
+        k = counts.shape[-1]
+        # create uniform probabilites by default
+        result = np.full_like(smoothed, 1.0 / k, dtype=float)
+        # divide each entry in the row by its total to normalize
+        np.divide(smoothed, totals, out=result, where=totals > 0)
+
+        return CPT(node, parents, result)
 
     def lookup(self, data: pd.DataFrame) -> np.ndarray:
-        """P(node value | parent values) for each row of `data`: shape (n_rows,).
-        NaN on rows where the node or any parent is missing."""
-        raise NotImplementedError
+        """
+        Probability the CPT assigns to each row's observed values.
+
+        For each row, reads the cell addressed by its parent values and its node value:
+
+            out[i] = table[p1_i, ..., pm_i, x_i] = P(node = x_i | parents = (p1_i, ..., pm_i))
+
+        Rows where the node or any parent is missing get NaN; there is no single cell to
+        read. (Summing over a missing value is inference, not lookup.)
+
+        Args:
+            data (pd.DataFrame): Binned data. Must contain a column for the node and each
+                parent, holding bin indices (0 to card - 1) or NaN. Other columns are
+                ignored, and column order doesn't matter.
+
+        Returns:
+            np.ndarray: Shape (n_rows,), aligned with the rows of `data`: one probability
+                per row, NaN where the row is incomplete.
+        """
+        # each row's address into the table: parent values, then the node's value
+        addresses = data[[*self.parents, self.node]].to_numpy()
+        # a row can be looked up only if every address value is present
+        complete = ~np.isnan(addresses).any(axis=1)
+
+        out = np.full(len(data), np.nan)
+        # one index array per table axis, paired row by row
+        axes = addresses[complete].astype(int).T
+        out[complete] = self.table[tuple(axes)]
+        return out
 
     def to_frame(self) -> pd.DataFrame:
-        """Readable version for notebooks: one row per parent combination, one column per node state."""
-        raise NotImplementedError
+        """Readable view of the table for notebooks and the report.
+
+        Flattens the table to 2-D: one row per parent combination, one column per node
+        state. Each row is P(node | that parent combination) and sums to 1.
+
+            rows      MultiIndex over the parents, one level per parent, named after it.
+                      Rows run in table order, last parent changing fastest:
+                      (0, 0), (0, 1), ..., (1, 0), ...
+            columns   the node's states 0 ... k-1, with the axis named after the node
+
+        A root node (no parents) gives a single row.
+
+        Returns:
+            pd.DataFrame: Shape (product of parent cards, node card).
+
+        Example:
+            P(S1 | CO, T) with CO: 3 bins, T: 2 bins, S1: 4 bins → shape (6, 4)
+
+                PT08.S1(CO)      0     1     2     3
+                CO(GT) T
+                0      0       0.17  0.19  0.29  0.35
+                       1       0.05  0.48  0.28  0.20
+                ...
+        """
+        # (p_bin_size,), k
+        *parent_cards, node_card = self.table.shape
+        # convert back to 
+        square = self.table.reshape(-1, node_card)
+        multi_idx = pd.MultiIndex.from_product(
+            [range(card) for card in parent_cards], names=list(self.parents)
+        )
+        return pd.DataFrame(square, index=multi_idx, columns=range(node_card))

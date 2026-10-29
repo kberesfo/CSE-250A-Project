@@ -6,7 +6,8 @@ import numpy as np
 
 @dataclass
 class Messages:
-    """Forward-backward output for a run of hours (Phase 4).
+    """
+    Forward-backward output for a run of hours (Phase 4).
 
     S is the number of joint states of the chain variables (e.g. 3**4 = 81 for four
     gases at 3 levels). Rows follow the data; each segment (a contiguous run of
