@@ -3,6 +3,8 @@ from typing import Self
 
 import pandas as pd
 
+from cse250a.modules.core import CPT, HOUR
+
 from .base import Model
 
 
@@ -15,11 +17,21 @@ class HourOnlyBaseline(Model):
 
     name = "hour_baseline"
 
-    def __init__(self, target: str, hour_col: str = "hour", alpha: float = 1.0):
+    def __init__(
+        self,
+        target: str,
+        *,
+        n_bins: int | None = None,
+        alpha: float = 1.0,
+        hour_col: str = HOUR,
+    ):
         super().__init__(target, evidence=[hour_col])
         self.hour_col = hour_col
+        self.n_bins = n_bins  # target's bins; None = infer in fit (max bin + 1)
         self.alpha = alpha  # Laplace pseudo-count
-        self.cpt: pd.DataFrame | None = None  # rows: hour (0–23), cols: target bins
+
+        # P(target | hour): rows hour 0–23, cols target bins
+        self.cpt: CPT | None = None
 
     def fit(self, train: pd.DataFrame) -> Self:
         """Count target bins per hour on rows where the target is observed; smooth and normalize."""
@@ -44,21 +56,30 @@ class PersistenceBaseline(Model):
 
     name = "persistence_baseline"
 
-    def __init__(self, target: str, hour_col: str = "hour", alpha: float = 1.0):
-        super().__init__(target, evidence=None)
+    def __init__(
+        self,
+        target: str,
+        *,
+        n_bins: int | None = None,
+        alpha: float = 1.0,
+        hour_col: str = HOUR,
+    ):
+        super().__init__(target, evidence=None)  # privileged: reads the target at t-1
         self.hour_col = hour_col
+        self.n_bins = n_bins
         self.alpha = alpha
-        self.transition: pd.DataFrame | None = (
-            None  # rows: previous bin, cols: current bin
+        self.transition: CPT | None = None  # P(target_t | target_{t-1})
+        self.fallback = HourOnlyBaseline(
+            target, n_bins=n_bins, alpha=alpha, hour_col=hour_col
         )
-        self.fallback = HourOnlyBaseline(target, hour_col, alpha)
 
     def fit(self, train: pd.DataFrame) -> Self:
         """Count (previous bin → current bin) pairs over consecutive hours; also fit the fallback."""
         raise NotImplementedError
 
     def _predict_proba(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Use the transition row for the previous hour's bin, or the fallback if it's unavailable."""
+        """Look up each row's hour in the CPT: P(target | hour) for every bin.
+        One row per data row, one column per target bin."""
         raise NotImplementedError
 
     def _previous(self, data: pd.DataFrame) -> pd.Series:
