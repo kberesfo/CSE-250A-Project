@@ -64,6 +64,7 @@ class DiscreteBN(Model):
         raise NotImplementedError
 
     def _counts(self, data: pd.DataFrame) -> dict[str, np.ndarray]:
+        #TODO: NEXT
         """Complete-case counts for every node: {node: array of shape (*parent cards,
         node card)}, counting only rows where the node and every parent are observed."""
         raise NotImplementedError

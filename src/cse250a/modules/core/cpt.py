@@ -53,29 +53,31 @@ class CPT:
             CPT: table[p1, ..., pm, j] = P(node = j | parents = (p1, ..., pm)).
 
         Example:
-                                        S1 bin 0   S1 bin 1   S1 bin 2
-                    CO = 0, T = 0     [   ...                         ]
-                    CO = 0, T = 1     [   ...                         ]
-                    CO = 0, T = 2     [   ...                         ]
-                    CO = 1, T = 0     [   ...                         ]
-                    ...                                                 ← 3 × 3 = 9 rows
-                    CO = 2, T = 2     [   ...                         ]
+            counts = [[3, 1],      alpha = 1   →   table = [[4/6, 2/6],
+                      [0, 0]]                               [1/2, 1/2]]
+            (parent state 1 was never seen, so its row is uniform)
         """
-        # robustness
-        counts = np.asanyarray(counts)
+        # accept lists too; always a plain float array
+        counts = np.asarray(counts, dtype=float)
+        # one axis per parent, then one for the node
+        if counts.ndim != len(parents) + 1:
+            raise ValueError(
+                f"CPT {node!r}: counts has {counts.ndim} axes, expected "
+                f"{len(parents) + 1} (one per parent plus the node)"
+            )
 
-        # add alpha to
+        # add alpha to every cell
         smoothed = counts + alpha
-        # sums across each row, one total per parent
+        # sum across each row: one total per parent combination
         totals = smoothed.sum(axis=-1, keepdims=True)
-        # count cardinality of variable (num bins)
+        # number of node states (bins)
         k = counts.shape[-1]
-        # create uniform probabilites by default
-        result = np.full_like(smoothed, 1.0 / k, dtype=float)
-        # divide each entry in the row by its total to normalize
+        # uniform by default, for parent combinations with no counts
+        result = np.full_like(smoothed, 1.0 / k)
+        # divide each row by its total, only where the total is nonzero
         np.divide(smoothed, totals, out=result, where=totals > 0)
 
-        return CPT(node, parents, result)
+        return cls(node, tuple(parents), result)
 
     def lookup(self, data: pd.DataFrame) -> np.ndarray:
         """
@@ -117,7 +119,7 @@ class CPT:
             rows      MultiIndex over the parents, one level per parent, named after it.
                       Rows run in table order, last parent changing fastest:
                       (0, 0), (0, 1), ..., (1, 0), ...
-            columns   the node's states 0 ... k-1, with the axis named after the node
+            columns   the node's states 0 ... k-1
 
         A root node (no parents) gives a single row.
 
@@ -127,17 +129,24 @@ class CPT:
         Example:
             P(S1 | CO, T) with CO: 3 bins, T: 2 bins, S1: 4 bins → shape (6, 4)
 
-                PT08.S1(CO)      0     1     2     3
+                            0     1     2     3
                 CO(GT) T
-                0      0       0.17  0.19  0.29  0.35
-                       1       0.05  0.48  0.28  0.20
+                0      0  0.17  0.19  0.29  0.35
+                       1  0.05  0.48  0.28  0.20
                 ...
         """
-        # (p_bin_size,), k
-        *parent_cards, node_card = self.table.shape
-        # convert back to 
-        square = self.table.reshape(-1, node_card)
-        multi_idx = pd.MultiIndex.from_product(
-            [range(card) for card in parent_cards], names=list(self.parents)
-        )
-        return pd.DataFrame(square, index=multi_idx, columns=range(node_card))
+        # parent cardinalities, then the node's number of states
+        *parent_cards, k = self.table.shape
+        # flatten to (parent combinations, node states)
+        flat = self.table.reshape(-1, k)
+        if parent_cards:
+            # row labels: every parent-value combination, last parent fastest
+            # (the same order reshape uses)
+            index = pd.MultiIndex.from_product(
+                [range(card) for card in parent_cards], names=list(self.parents)
+            )
+        else:
+            # root node: one row, P(node) itself
+            index = pd.RangeIndex(1)
+        # rows labeled by parent combination, columns by node state
+        return pd.DataFrame(flat, index=index, columns=range(k))
