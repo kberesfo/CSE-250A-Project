@@ -111,7 +111,8 @@ class HourOnlyBaseline(Model):
 
 
 class PersistenceBaseline(Model):
-    """Predicts the target from the previous hour's observed value: P(target_t | target_{t-1}).
+    """
+    Predicts the target from the previous hour's observed value: P(target_t | target_{t-1}).
 
     The reference for Phase 4 (HMM): temporal structure must beat "same as last hour."
     Rows whose previous hour is missing or in another block fall back to the hour-of-day prior.

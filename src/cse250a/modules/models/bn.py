@@ -1,4 +1,5 @@
 # modules/models/bn.py
+import itertools
 from collections.abc import Mapping, Sequence
 from typing import Self
 
@@ -193,10 +194,9 @@ class DiscreteBN(Model):
         as all-NaN columns first, as in fit."""
         raise NotImplementedError
 
-    def _joint(
-        self, row: pd.Series, keep_all: bool = False
-    ) -> tuple[list[str], np.ndarray]:
-        """The posterior over the unobserved nodes of one row.
+    def _joint(self, row: pd.Series) -> tuple[list[str], np.ndarray]:
+        """
+        The posterior over the unobserved nodes of one row.
 
         Returns (hidden, joint): `hidden` lists the unobserved nodes (missing or
         latent), and joint[i, j, ...] = P(hidden = (i, j, ...) | the row's
@@ -208,19 +208,59 @@ class DiscreteBN(Model):
         prediction fast. keep_all=True keeps every unobserved node, which the
         E-step needs. Rows with a missing input (hour, weather) can't be scored;
         drop them in preprocessing.
+
+        Args:
+            row (pd.Series): _description_
+            keep_all (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            tuple[list[str], np.ndarray]: _description_
         """
-        raise NotImplementedError
+        # NOTE:
+        hidden = [n for n in self.structure if n not in row.index or pd.isna(row[n])]
+        joint = np.zeros(tuple(self.cards[h] for h in hidden))  # shape (3, 2)
+
+        # print(list(zip(hidden, states)))  # [("G", 2), ("A", 1)]   pairs them up
+        for states in itertools.product(*[range(self.cards[h]) for h in hidden]):
+            # print(dict(zip(hidden, states)))  # {"G": 2, "A": 1}       look up by name
+            assignment = dict(zip(hidden, states))
+            factor = 1.0
+            for node, parents in self.structure.items():
+                keys = [*parents, node]
+                # assignment[var] if var is hidden, else int(row[var])
+                index = tuple(
+                    assignment[var] if var in hidden else int(row[var]) for var in keys
+                )
+                factor *= self.cpts[node].table[index]
+            joint[states] = factor
+
+        joint = joint / joint.sum()
+
+        return hidden, joint
 
     def posterior(self, data: pd.DataFrame, node: str) -> np.ndarray:
         """P(node | the observed cells of each row): shape (n_rows, cards[node]).
         Per row: sum `_joint` down to `node`, or a one-hot if `node` is observed.
         Works for latent nodes too, e.g. P(Event | row) for the rush-hour plot."""
-        raise NotImplementedError
+        out = np.zeros((len(data), self.cards[node]))
+
+        for i, (_, row) in enumerate(data.iterrows()):
+            hidden, joint = self._joint(row)
+            if node in hidden:
+                j = hidden.index(node)
+                # every axis number except j
+                others = tuple([axis for axis in range(joint.ndim) if axis != j])
+
+                out[i] = joint.sum(axis=others)
+            else:
+                out[i, int(row[node])] = 1
+
+        return out
 
     def log_likelihood(self, data: pd.DataFrame) -> float:
         """Σ_rows log P(observed cells of the row). Held-out fit, and the
         quantity EM tracks."""
-        raise NotImplementedError
+        
 
     # ── diagnostics ────────────────────────────────────────────────────────
 
