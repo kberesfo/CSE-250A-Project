@@ -6,7 +6,7 @@ import pandas as pd
 
 def load_air_quality(path: str | Path) -> pd.DataFrame:
     """UCI Air Quality as an hourly DataFrame: datetime index, -200 → NaN, plus an `hour` column."""
-    
+
     df = pd.read_csv(path, sep=";", decimal=",")
     df = df.loc[:, ~df.columns.str.startswith("Unnamed")]  # two empty trailing columns
     df = df.dropna(how="all")  # blank trailing rows
