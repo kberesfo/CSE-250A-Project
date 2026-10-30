@@ -168,18 +168,63 @@ class DiscreteBN(Model):
     def _expected_counts(
         self, data: pd.DataFrame
     ) -> tuple[dict[str, np.ndarray], float]:
-        """E-step at the current CPTs.
-
-        For every row and every node, add P(node, parents | row) into
-        counts[node]: take (hidden, joint) from self._joint(row, keep_all=True),
-        sum `joint` down to the family's hidden members, and use the observed
-        values for the rest. With nothing hidden this adds 1 to a single cell,
-        i.e. the complete-case counts.
-
-        Returns (counts, loglik), where loglik = Σ_rows log P(row's observed
-        cells), the normalizer of each row's joint before normalizing.
         """
-        raise NotImplementedError
+        E-step at the current CPTs.
+
+            For every row and every node, add P(node, parents | row) into
+            counts[node]: take (hidden, joint) from self._joint(row, keep_all=True),
+            sum `joint` down to the family's hidden members, and use the observed
+            values for the rest. With nothing hidden this adds 1 to a single cell,
+            i.e. the complete-case counts.
+
+            Returns (counts, loglik), where loglik = Σ_rows log P(row's observed
+            cells), the normalizer of each row's joint before normalizing.
+
+        Args:
+            data (pd.DataFrame): _description_
+
+        Returns:
+            tuple[dict[str, np.ndarray], float]: _description_
+        """
+        counts = {
+            n: np.zeros(tuple(self.cards[c] for c in [*parents, n]))
+            for n, parents in self.structure.items()
+        }
+        loglik = 0.0
+
+        for _, row in data.iterrows():
+            hidden, table = self._unnormalized(row)
+            z = table.sum()  # whole table → one number
+            loglik += np.log(z)
+            joint = table / z
+
+            for node, parents in self.structure.items():
+                family = [*parents, node]
+                # family members that are in hidden
+                fam_hidden = [x for x in family if x in hidden]
+                # hidden.index(...) for each of fam_hidden
+                axes = [hidden.index(c) for c in fam_hidden]
+                others = tuple(axis for axis in range(joint.ndim) if axis not in axes)
+                small = joint.sum(axis=others)
+                # small's axes, as they are now
+                order = sorted(axes)
+                # reordered to family order
+                small = np.transpose(small, [order.index(a) for a in axes])
+                index = []
+
+                for c in family:
+                    if c in hidden:
+                        # all rows of node
+                        index.append(slice(None))
+                    else:
+                        # the observed bin
+                        index.append(int(row[c]))
+                # type cast
+                index = tuple(index)
+
+                counts[node][index] += small
+
+        return counts, float(loglik)
 
     def _log_prior(self) -> float:
         """Σ alpha · log θ over every CPT entry: the Dirichlet log-prior (up to a
@@ -192,9 +237,43 @@ class DiscreteBN(Model):
         """self.posterior(data, self.target) as a DataFrame: index = data.index,
         one column per target bin (0 … cards[target] - 1). Latent nodes are added
         as all-NaN columns first, as in fit."""
-        raise NotImplementedError
 
-    def _joint(self, row: pd.Series) -> tuple[list[str], np.ndarray]:
+    def _unnormalized(
+        self, row: pd.Series, keep_all: bool = False
+    ) -> tuple[list[str], np.ndarray]:
+        """
+        the same table as _joint, before dividing by its sum; table.sum() = P(observed cells).
+
+        Args:
+            row (pd.Series): _description_
+            keep_all (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            tuple[list[str], np.ndarray]: _description_
+        """
+        # NOTE:
+        hidden = [n for n in self.structure if n not in row.index or pd.isna(row[n])]
+        table = np.zeros(tuple(self.cards[h] for h in hidden))  # shape (3, 2)
+
+        # print(list(zip(hidden, states)))  # [("G", 2), ("A", 1)]   pairs them up
+        for states in itertools.product(*[range(self.cards[h]) for h in hidden]):
+            # print(dict(zip(hidden, states)))  # {"G": 2, "A": 1}       look up by name
+            assignment = dict(zip(hidden, states))
+            factor = 1.0
+            for node, parents in self.structure.items():
+                keys = [*parents, node]
+                # assignment[var] if var is hidden, else int(row[var])
+                index = tuple(
+                    assignment[var] if var in hidden else int(row[var]) for var in keys
+                )
+                factor *= self.cpts[node].table[index]
+            table[states] = factor
+
+        return hidden, table
+
+    def _joint(
+        self, row: pd.Series, keep_all: bool = False
+    ) -> tuple[list[str], np.ndarray]:
         """
         The posterior over the unobserved nodes of one row.
 
@@ -216,32 +295,26 @@ class DiscreteBN(Model):
         Returns:
             tuple[list[str], np.ndarray]: _description_
         """
-        # NOTE:
-        hidden = [n for n in self.structure if n not in row.index or pd.isna(row[n])]
-        joint = np.zeros(tuple(self.cards[h] for h in hidden))  # shape (3, 2)
 
-        # print(list(zip(hidden, states)))  # [("G", 2), ("A", 1)]   pairs them up
-        for states in itertools.product(*[range(self.cards[h]) for h in hidden]):
-            # print(dict(zip(hidden, states)))  # {"G": 2, "A": 1}       look up by name
-            assignment = dict(zip(hidden, states))
-            factor = 1.0
-            for node, parents in self.structure.items():
-                keys = [*parents, node]
-                # assignment[var] if var is hidden, else int(row[var])
-                index = tuple(
-                    assignment[var] if var in hidden else int(row[var]) for var in keys
-                )
-                factor *= self.cpts[node].table[index]
-            joint[states] = factor
+        hidden, table = self._unnormalized(row)
 
-        joint = joint / joint.sum()
+        joint = table / table.sum()
 
         return hidden, joint
 
     def posterior(self, data: pd.DataFrame, node: str) -> np.ndarray:
-        """P(node | the observed cells of each row): shape (n_rows, cards[node]).
+        """
+        P(node | the observed cells of each row): shape (n_rows, cards[node]).
         Per row: sum `_joint` down to `node`, or a one-hot if `node` is observed.
-        Works for latent nodes too, e.g. P(Event | row) for the rush-hour plot."""
+        Works for latent nodes too, e.g. P(Event | row) for the rush-hour plot.
+
+        Args:
+            data (pd.DataFrame): discretized data
+            node (str): node to calculate the posterior P(node | the observed cells of each row)
+
+        Returns:
+            np.ndarray: calculated posterior for the given node
+        """
         out = np.zeros((len(data), self.cards[node]))
 
         for i, (_, row) in enumerate(data.iterrows()):
@@ -258,9 +331,31 @@ class DiscreteBN(Model):
         return out
 
     def log_likelihood(self, data: pd.DataFrame) -> float:
-        """Σ_rows log P(observed cells of the row). Held-out fit, and the
-        quantity EM tracks."""
-        
+        """
+        Log-likelihood of the observed cells: Σ_rows log P(observed cells of the row).
+
+        Per row, `_unnormalized(row).sum()` marginalizes out every hidden node
+        (missing or latent), leaving P(observed modeled cells | inputs). Inputs
+        (hour, weather) have no CPT, so the value is conditional on them.
+
+        Used as the held-out fit metric (higher is better; compare models on the
+        same rows, or divide by len(data) for a per-hour average) and as the
+        quantity EM tracks.
+
+        Args:
+            data (pd.DataFrame): Binned rows. Missing cells are NaN; latent
+                columns may be absent. Inputs must be observed.
+
+        Returns:
+            float: Total log-likelihood over all rows (≤ 0).
+        """
+        total = 0.0
+
+        for i, (_, row) in enumerate(data.iterrows()):
+            _, table = self._unnormalized(row)
+            total += np.log(table.sum())
+
+        return float(total)
 
     # ── diagnostics ────────────────────────────────────────────────────────
 
