@@ -1,6 +1,7 @@
 # modules/core/results.py
 from dataclasses import dataclass, field
 
+import numpy as np
 import pandas as pd
 
 
@@ -20,22 +21,35 @@ class FitResult:
     @property
     def final(self) -> float:
         """Last recorded objective. NaN if nothing was recorded."""
-        raise NotImplementedError
+        if not self.history:
+            return np.nan
+
+        return self.history[-1]
 
     def record(self, objective: float) -> None:
         """Append one iteration's objective and increment n_iter."""
-        raise NotImplementedError
+        self.history.append(objective)
+        self.n_iter += 1
 
     def should_stop(self, tol: float) -> bool:
         """True when the last gain is below tol × |previous objective|.
         False with fewer than two entries."""
-        raise NotImplementedError
+        if len(self.history) < 2:
+            return False
+
+        curr = self.history[-1]
+        prev = self.history[-2]
+
+        return bool(curr - prev < tol * np.abs(prev))
 
     def is_monotone(self, rtol: float = 1e-8) -> bool:
         """True if the objective never dropped by more than rtol × |value|.
         A drop means a bug in the E-step or M-step, not bad luck."""
-        raise NotImplementedError
+
+        h = np.asarray(self.history)
+
+        return bool(np.all(np.diff(h) >= -rtol * np.abs(h[:-1])))
 
     def to_frame(self) -> pd.DataFrame:
         """One row per iteration (columns: iteration, objective), for the convergence plot."""
-        raise NotImplementedError
+        return pd.DataFrame({"objective": self.history}).rename_axis("iteration")

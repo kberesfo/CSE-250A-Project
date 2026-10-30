@@ -103,7 +103,43 @@ class DiscreteBN(Model):
         With alpha > 0 this is MAP-EM: loglik + log-prior is the quantity that
         never decreases. self.result.is_monotone() checks that.
         """
-        raise NotImplementedError
+        # AI DEFENSIVE
+        inputs = {p for ps in self.structure.values() for p in ps} - set(self.structure)
+        needed = (set(self.structure) - set(self.latent)) | inputs
+        missing = sorted(needed - set(train.columns))
+        if missing:
+            raise ValueError(f"{self.name}: columns missing from train: {missing}")
+        no_card = sorted((set(self.structure) | inputs) - set(self.cards))
+        if no_card:
+            raise ValueError(f"{self.name}: no entry in cards for: {no_card}")
+        # END AI DEFENSIVE
+
+        # copy of train adding latent nodes
+        train = train.assign(**{z: np.nan for z in self.latent})
+
+        # 3. self.cpts = self._init_cpts(train)
+        self.cpts = self._init_cpts(train)
+        self.result = FitResult()
+
+        for _ in range(self.max_iter):
+            # e-step
+            counts, loglik = self._expected_counts(train)
+
+            self.result.record(loglik + self._log_prior())
+
+            if self.result.should_stop(self.tol):
+                self.result.converged = True
+                break
+            # m-step
+            for node, parents in self.structure.items():
+                self.cpts[node] = CPT.from_counts(
+                    node,
+                    parents,
+                    counts[node],
+                    self.alpha,
+                )
+
+        return self
 
     def _init_cpts(self, train: pd.DataFrame) -> dict[str, CPT]:
         """Starting CPTs.
@@ -229,7 +265,15 @@ class DiscreteBN(Model):
     def _log_prior(self) -> float:
         """Σ alpha · log θ over every CPT entry: the Dirichlet log-prior (up to a
         constant) that MAP-EM adds to the log-likelihood. 0 when alpha == 0."""
-        raise NotImplementedError
+
+        if self.alpha == 0:
+            return 0.0
+        total = 0.0
+
+        for cpt in self.cpts.values():
+            total += self.alpha * np.log(cpt.table).sum()
+
+        return float(total)
 
     # ── inference ──────────────────────────────────────────────────────────
 
@@ -237,6 +281,12 @@ class DiscreteBN(Model):
         """self.posterior(data, self.target) as a DataFrame: index = data.index,
         one column per target bin (0 … cards[target] - 1). Latent nodes are added
         as all-NaN columns first, as in fit."""
+        if not self.cpts:
+            raise RuntimeError(f"{self.name}: call fit() before predicting")
+
+        rows = self.posterior(data, self.target)
+        k = self.cards[self.target]
+        return pd.DataFrame(rows, index=data.index, columns=range(k))
 
     def _unnormalized(
         self, row: pd.Series, keep_all: bool = False
