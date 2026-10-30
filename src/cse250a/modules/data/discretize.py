@@ -56,7 +56,7 @@ class Discretizer:
         """
         for col in cols:
             if col in self.fixed_edges:
-                edges = self.fixed_edges.get(col)
+                edges = self.fixed_edges[col]
                 # check if each edge is bigger than the last
                 if np.any(np.diff(edges) <= 0):
                     raise ValueError(
@@ -65,7 +65,7 @@ class Discretizer:
             else:
                 k = self.bins_for(col)
                 fractions = np.arange(1, k) / k
-                edges = np.nanquantile(train[col].to_numpy(), fractions)
+                edges = np.nanquantile(train[col].to_numpy(dtype=float), fractions)
             self.edges[col] = edges
 
         return self
@@ -79,7 +79,7 @@ class Discretizer:
             x = df[col].to_numpy(dtype=float)
             bins = np.digitize(x, edges).astype(float)
             nan_loc = np.isnan(x)
-            bins[nan_loc] = np.nan 
+            bins[nan_loc] = np.nan
             out[col] = bins
 
         return out
