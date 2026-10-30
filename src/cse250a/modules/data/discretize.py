@@ -31,7 +31,9 @@ class Discretizer:
         """
         self.n_bins = n_bins
         self.per_column = dict(per_column or {})
-        self.fixed_edges = {c: np.asarray(e, dtype=float) for c, e in (fixed_edges or {}).items()}
+        self.fixed_edges = {
+            c: np.asarray(e, dtype=float) for c, e in (fixed_edges or {}).items()
+        }
         # learned (or fixed) interior edges per fitted column; k bins → k - 1 edges
         self.edges: dict[str, np.ndarray] = {}
 
@@ -52,12 +54,35 @@ class Discretizer:
         bins_for(col) - 1 quantile edges, evenly spaced in probability
         (for 3 bins: the 1/3 and 2/3 quantiles). Stores them in self.edges.
         """
-        raise NotImplementedError
+        for col in cols:
+            if col in self.fixed_edges:
+                edges = self.fixed_edges.get(col)
+                # check if each edge is bigger than the last
+                if np.any(np.diff(edges) <= 0):
+                    raise ValueError(
+                        f"fixed edges for {col!r} must be strictly increasing, got {list(edges)}"
+                    )
+            else:
+                k = self.bins_for(col)
+                fractions = np.arange(1, k) / k
+                edges = np.nanquantile(train[col].to_numpy(), fractions)
+            self.edges[col] = edges
+
+        return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Copy of `df` with each fitted column replaced by its bin index
         (0 … k-1); NaN stays NaN. Columns not fitted pass through unchanged."""
-        raise NotImplementedError
+        out = df.copy()
+
+        for col, edges in self.edges.items():
+            x = df[col].to_numpy(dtype=float)
+            bins = np.digitize(x, edges).astype(float)
+            nan_loc = np.isnan(x)
+            bins[nan_loc] = np.nan 
+            out[col] = bins
+
+        return out
 
     def fit_transform(self, train: pd.DataFrame, cols: Sequence[str]) -> pd.DataFrame:
         return self.fit(train, cols).transform(train)
