@@ -11,7 +11,8 @@ from .base import Model
 
 
 class DiscreteBN(Model):
-    """Discrete Bayesian network over binned columns, learned by EM. One class for
+    """
+    Discrete Bayesian network over binned columns, learned by EM. One class for
     every phase.
 
     The structure is passed in, so each phase is a dict built in its notebook:
@@ -113,7 +114,30 @@ class DiscreteBN(Model):
         uniform, or the latent states never separate. Then self.init[node]
         replaces any node given there.
         """
-        raise NotImplementedError
+        rng = np.random.default_rng(self.seed)
+        complete = self._complete_counts(train)
+        out = {}
+
+        for node, parents in self.structure.items():
+            cols = [*parents, node]
+            shape = tuple(self.cards[c] for c in cols)
+
+            if any(c in self.latent for c in cols):
+                k = shape[-1]
+                n_rows = int(np.prod(shape[:-1]))
+                table = rng.dirichlet(np.ones(k), size=n_rows).reshape(shape)
+                cpt = CPT(node, tuple(parents), table)
+            else:
+                cpt = CPT.from_counts(node, parents, complete[node], self.alpha)  # 4
+
+            if node in self.init:
+                cpt = CPT(
+                    node, tuple(parents), np.asarray(self.init[node], dtype=float)
+                )
+
+            out[node] = cpt
+
+        return out
 
     def _complete_counts(self, data: pd.DataFrame) -> dict[str, np.ndarray]:
         """Counts for every node: {node: array of shape (*parent cards, node card)},
