@@ -1,7 +1,17 @@
 # modules/core/columns.py
 from enum import StrEnum
 
-HOUR = "hour"  # added by load_air_quality
+
+class Time(StrEnum):
+    """Calendar columns added in preprocessing (not in the raw CSV)."""
+
+    HOUR = "hour"
+    IS_WEEKDAY = "is_weekday"
+    DOW = "dow"  # 0 = Monday … 6 = Sunday
+
+
+# fixed cardinalities: these never depend on n_bins
+TIME_CARDS = {Time.HOUR: 24, Time.IS_WEEKDAY: 2, Time.DOW: 7}
 
 
 class Gas(StrEnum):

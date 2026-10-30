@@ -3,7 +3,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Self
 
-from .columns import HOUR, Gas, Sensor, Weather  # noqa: F401
+from .columns import Gas, Sensor, Time, Weather  # noqa: F401
 
 SENSORS = tuple(Sensor)
 GASES = (Gas.CO, Gas.C6H6, Gas.NOX, Gas.NO2)  # NMHC left out

@@ -1,4 +1,4 @@
-from .columns import HOUR, Gas, Sensor, Weather
+from .columns import Gas, Sensor, Time, Weather
 from .cpt import CPT
 from .messages import Messages
 from .network import (
@@ -18,7 +18,6 @@ __all__ = [
     "CPT",
     "CROSS",
     "GASES",
-    "HOUR",
     "NOMINAL",
     "SENSORS",
     "WEATHER",
@@ -27,6 +26,7 @@ __all__ = [
     "Messages",
     "Network",
     "Sensor",
+    "Time",
     "Weather",
     "multi_gas_network",
     "sensor_gases",
