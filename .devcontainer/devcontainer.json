@@ -27,13 +27,15 @@
 				"njpwerner.autodocstring",
 				"redhat.vscode-yaml",
 				"James-Yu.latex-workshop",
-				"tomoki1207.pdf"
+				"tomoki1207.pdf",
+				"Gruntfuggly.todo-tree"
 			],
 			"settings": {
 				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
 				"jupyter.notebookFileRoot": "${fileDirname}",
+				"todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
 				"notebook.codeActionsOnSave": {
-					"source.organizeImports.ruff": "explicit"
+					"notebook.source.organizeImports.ruff": "explicit"
 				},
 				"[python]": {
 					"editor.codeActionsOnSave": {
@@ -45,6 +47,6 @@
 	},
 	"remoteUser": "vscode",
 	// "initializeCommand": "touch .devcontainer/.env",
-	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes"
+	"postCreateCommand": "uv sync --locked && uv run nbstripout --install --attributes .gitattributes && uv run pre-commit install"
 	// "runArgs": ["--env-file", ".devcontainer/.env"]
 }

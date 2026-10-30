@@ -1,16 +1,22 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .experiment import BinSettings, SplitSettings
 from .paths import REPO_ROOT, PathSettings
 
 
+# config.py
 class Config(BaseSettings):
-    """Top-level project config. Add new groups as fields (e.g. em: EMSettings)."""
+    model_config = SettingsConfigDict(
+        env_file=REPO_ROOT / ".env",
+        extra="ignore",
+        env_nested_delimiter="__",
+    )  # SPLIT__TRAIN=0.6, BINS__N_BINS=5
 
-    model_config = SettingsConfigDict(env_file=REPO_ROOT / ".env", extra="ignore")
-
-    seed: int = 0  # SEED
+    seed: int = 0
     paths: PathSettings = Field(default_factory=PathSettings)
+    split: SplitSettings = Field(default_factory=SplitSettings)
+    bins: BinSettings = Field(default_factory=BinSettings)
 
 
 config = Config()

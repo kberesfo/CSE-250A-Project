@@ -7,4 +7,5 @@ RUN apt-get update \
         texlive-latex-extra \
         texlive-fonts-recommended \
         lmodern \
+        ripgrep \
     && rm -rf /var/lib/apt/lists/*
