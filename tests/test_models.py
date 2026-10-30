@@ -1,4 +1,4 @@
-"""models/: the Model contract, baselines, DiscreteBN (Phases 1–2), LatentBN (Phase 3)."""
+"""models/: the Model contract, baselines, and DiscreteBN (counting, inference, EM)."""
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ from conftest import (
     random_cpts,
     sample,
     shape,
+    smoothed,
 )
 
 from cse250a.modules.models import HourOnlyBaseline, Model, PersistenceBaseline
@@ -86,13 +87,13 @@ def test_persistence_previous_respects_gaps():
     assert prev.iloc[3] == 2.0
 
 
-# ── DiscreteBN (Phases 1–2) ────────────────────────────────────────────────────
+# ── DiscreteBN: counting and inference ─────────────────────────────────────────
 
 
-def test_counts_are_complete_case():
+def test_complete_counts_are_complete_case():
     cpts = random_cpts(STATIC, STATIC_CARDS, seed=3)
     data = sample(STATIC, STATIC_CARDS, cpts, 300, seed=4, missing=0.2)
-    counts = make_bn()._counts(data)
+    counts = make_bn()._complete_counts(data)
     assert set(counts) == set(STATIC)
     expected = np.zeros(shape(STATIC, STATIC_CARDS, "B"))  # B | G, W
     for g, w, b in data[["G", "W", "B"]].dropna().astype(int).itertuples(index=False):
@@ -100,16 +101,18 @@ def test_counts_are_complete_case():
     np.testing.assert_array_equal(counts["B"], expected)
 
 
-def test_fit_is_smoothed_normalized_counts():
+def test_fit_on_complete_data_is_smoothed_counts_in_one_step():
+    """Nothing missing → EM's first step is plain counting, and it stops there."""
     cpts = random_cpts(STATIC, STATIC_CARDS, seed=5)
-    data = sample(STATIC, STATIC_CARDS, cpts, 300, seed=6, missing=0.2)
+    data = sample(STATIC, STATIC_CARDS, cpts, 300, seed=6)
     model = make_bn(alpha=1.0).fit(data)
-    counts = model._counts(data)
+    counts = model._complete_counts(data)
     for node in STATIC:
-        expected = (counts[node] + 1.0) / (counts[node] + 1.0).sum(
-            axis=-1, keepdims=True
+        np.testing.assert_allclose(
+            model.cpts[node].table, smoothed(counts[node], 1.0), err_msg=node
         )
-        np.testing.assert_allclose(model.cpts[node].table, expected, err_msg=node)
+    assert model.result.converged
+    assert model.result.n_iter <= 2
 
 
 def test_fit_recovers_the_true_cpts_with_lots_of_data():
@@ -120,6 +123,13 @@ def test_fit_recovers_the_true_cpts_with_lots_of_data():
         np.testing.assert_allclose(
             model.cpts[node].table, truth[node].table, atol=0.05, err_msg=node
         )
+
+
+def test_fit_rejects_a_node_that_is_not_a_column_and_not_latent():
+    """A misspelled column must raise, not silently become a hidden variable."""
+    data = sample(STATIC, STATIC_CARDS, random_cpts(STATIC, STATIC_CARDS, 0), 20, 1)
+    with pytest.raises(ValueError, match="A"):
+        make_bn().fit(data.drop(columns=["A"]))
 
 
 def test_joint_is_a_distribution_over_the_unknowns(static_case):
@@ -180,77 +190,71 @@ def test_sparsity_reports_every_cpt():
     assert {"empty", "thin"} <= set(report.columns)
 
 
-# ── LatentBN (Phase 3) ─────────────────────────────────────────────────────────
+# ── DiscreteBN: EM (missing values and latent nodes) ───────────────────────────
 
 
-def history(model):
-    """EM objective per iteration, whether stored as a list or a FitResult."""
-    result = getattr(model, "result", None)
-    return np.asarray(result.history if result is not None else model.history)
-
-
-def test_expected_counts_on_complete_data_are_hard_counts():
+def test_expected_counts_on_complete_data_are_complete_counts():
     cpts = random_cpts(STATIC, STATIC_CARDS, seed=11)
     data = sample(STATIC, STATIC_CARDS, cpts, 60, seed=12)
-    em = make_latent(
-        structure=STATIC,
-        target="G",
-        evidence=["H", "W", "A", "B"],
-        cards=STATIC_CARDS,
-        latent=(),
-    )
-    em.cpts = cpts
-    soft, hard = em._counts(data), make_bn()._counts(data)
+    model = make_bn()
+    model.cpts = cpts
+    soft, _ = model._expected_counts(data)
+    hard = model._complete_counts(data)
     for node in STATIC:
         np.testing.assert_allclose(soft[node], hard[node], err_msg=node)
 
 
-def test_expected_counts_match_brute_force():
+def test_expected_counts_and_loglik_match_brute_force():
     cpts = random_cpts(LATENT, LATENT_CARDS, seed=13)
     data = sample(LATENT, LATENT_CARDS, cpts, 30, seed=14, missing=0.3, drop=["Z"])
-    em = make_latent()
-    em.cpts = cpts
-    got = em._counts(data.assign(Z=np.nan))
+    model = make_latent()
+    model.cpts = cpts
+    got, loglik = model._expected_counts(data.assign(Z=np.nan))
     expected = brute_expected_counts(LATENT, LATENT_CARDS, cpts, data)
     for node in LATENT:
         np.testing.assert_allclose(got[node], expected[node], atol=1e-10, err_msg=node)
+    assert loglik == pytest.approx(brute_loglik(LATENT, LATENT_CARDS, cpts, data))
 
 
-def test_em_on_complete_data_equals_mle():
-    truth = random_cpts(STATIC, STATIC_CARDS, seed=15)
-    data = sample(STATIC, STATIC_CARDS, truth, 500, seed=16)
-    mle = make_bn().fit(data)
-    em = make_latent(
-        structure=STATIC,
-        target="G",
-        evidence=["H", "W", "A", "B"],
-        cards=STATIC_CARDS,
-        latent=(),
-        max_iter=5,
-    )
-    em.fit(data)
-    for node in STATIC:
-        np.testing.assert_allclose(
-            em.cpts[node].table, mle.cpts[node].table, err_msg=node
+def test_em_uses_rows_with_missing_values():
+    """A missing G with A and B observed still carries information, so EM's CPTs
+    differ from counting complete rows only."""
+    truth = random_cpts(STATIC, STATIC_CARDS, seed=21)
+    data = sample(STATIC, STATIC_CARDS, truth, 400, seed=22, missing=0.3)
+    model = make_bn(alpha=1.0).fit(data)
+    complete = model._complete_counts(data)
+    assert not np.allclose(model.cpts["G"].table, smoothed(complete["G"], 1.0))
+    assert model.result.n_iter > 2, "missing data should take more than one step"
+
+
+@pytest.mark.parametrize("which", ["missing", "latent"])
+def test_em_objective_never_decreases(which):
+    if which == "missing":
+        truth = random_cpts(STATIC, STATIC_CARDS, seed=17)
+        data = sample(STATIC, STATIC_CARDS, truth, 400, seed=18, missing=0.3)
+        model = make_bn(max_iter=30, tol=0.0).fit(data)
+    else:
+        truth = random_cpts(LATENT, LATENT_CARDS, seed=17)
+        data = sample(
+            LATENT, LATENT_CARDS, truth, 400, seed=18, missing=0.3, drop=["Z"]
         )
-
-
-def test_em_objective_never_decreases():
-    truth = random_cpts(LATENT, LATENT_CARDS, seed=17)
-    data = sample(LATENT, LATENT_CARDS, truth, 400, seed=18, missing=0.3, drop=["Z"])
-    em = make_latent(max_iter=30, tol=0.0).fit(data)
-    h = history(em)
+        model = make_latent(max_iter=30, tol=0.0).fit(data)
+    h = np.asarray(model.result.history)
     assert len(h) >= 2
-    assert np.all(np.diff(h) >= -1e-8 * np.abs(h[:-1])), (
-        "a drop means a bug in the E- or M-step"
-    )
+    assert model.result.is_monotone(), "a drop means a bug in the E- or M-step"
 
 
 def test_init_cpts_are_random_seeded_and_respect_overrides():
+    """Every LATENT family touches Z, so every start is random (seeded); `init`
+    overrides a node's start."""
+    data = sample(
+        LATENT, LATENT_CARDS, random_cpts(LATENT, LATENT_CARDS, 0), 50, 1, drop=["Z"]
+    )
+    data = data.assign(Z=np.nan)
     anchor = np.array([[0.8, 0.2], [0.2, 0.8]])
-    a = make_latent(init={"R": anchor}, seed=0)._init_cpts()
-    b = make_latent(init={"R": anchor}, seed=0)._init_cpts()
-    c = make_latent(init={"R": anchor}, seed=1)._init_cpts()
+    a = make_latent(init={"R": anchor}, seed=0)._init_cpts(data)
+    b = make_latent(init={"R": anchor}, seed=0)._init_cpts(data)
+    c = make_latent(init={"R": anchor}, seed=1)._init_cpts(data)
     assert set(a) == set(LATENT)
     np.testing.assert_allclose(a["R"].table, anchor)
     for node in LATENT:
@@ -263,13 +267,25 @@ def test_init_cpts_are_random_seeded_and_respect_overrides():
     )
 
 
+def test_init_cpts_use_complete_counts_where_nothing_is_latent():
+    cpts = random_cpts(STATIC, STATIC_CARDS, seed=23)
+    data = sample(STATIC, STATIC_CARDS, cpts, 200, seed=24, missing=0.2)
+    model = make_bn(alpha=1.0)
+    start = model._init_cpts(data)
+    complete = model._complete_counts(data)
+    for node in STATIC:
+        np.testing.assert_allclose(
+            start[node].table, smoothed(complete[node], 1.0), err_msg=node
+        )
+
+
 def test_latent_posterior_matches_brute_force():
     cpts = random_cpts(LATENT, LATENT_CARDS, seed=19)
     data = sample(LATENT, LATENT_CARDS, cpts, 30, seed=20, missing=0.3, drop=["Z"])
-    em = make_latent()
-    em.cpts = cpts
+    model = make_latent()
+    model.cpts = cpts
     np.testing.assert_allclose(
-        em.posterior(data, "Z"),
+        model.posterior(data, "Z"),
         brute_posterior(LATENT, LATENT_CARDS, cpts, data, "Z"),
         atol=1e-10,
     )

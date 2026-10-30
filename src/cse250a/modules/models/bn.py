@@ -120,7 +120,25 @@ class DiscreteBN(Model):
         using only rows where the node and every parent are observed. Same idea as
         HourOnlyBaseline.fit, once per node. Families with a latent member get
         all zeros (no complete rows)."""
-        raise NotImplementedError
+        out = {}
+        for node, parents in self.structure.items():
+            cols = [*parents, node]
+            # shape from self.cards
+            shape = tuple(self.cards[c] for c in cols)
+
+            # if any column in cols is missing from data (a latent node):
+            if any(c not in data.columns for c in cols):
+                out[node] = np.zeros(shape)
+                continue
+
+            rows = data[cols].to_numpy()
+            complete = ~np.isnan(rows).any(axis=1)
+            counts = np.zeros(shape)
+            keep_rows = rows[complete].astype(int)
+            np.add.at(counts, tuple(keep_rows.T), 1)
+            out[node] = counts
+
+        return out
 
     def _expected_counts(
         self, data: pd.DataFrame

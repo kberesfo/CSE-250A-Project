@@ -4,8 +4,9 @@ The brute force enumerates every assignment of every unknown node with plain
 loops. It is slow (fine for 3–4 nodes) but obviously correct, so when a model
 disagrees with it, the model is wrong.
 
-Models are built through `make_bn` / `make_latent`, so if the constructor
-signatures change (e.g. to take a Network), only these two helpers change.
+Models are built through `make_bn` / `make_latent` (both a DiscreteBN; the second
+with a latent node), so if the constructor signature changes (e.g. to take a
+Network), only these two helpers change.
 """
 
 import itertools
@@ -16,7 +17,7 @@ import pandas as pd
 import pytest
 
 from cse250a.modules.core import CPT
-from cse250a.modules.models import DiscreteBN, LatentBN
+from cse250a.modules.models import DiscreteBN
 
 # ── tiny networks ──────────────────────────────────────────────────────────────
 # Same shape as the phases: hour → gas → sensors ← weather.
@@ -27,7 +28,7 @@ STATIC = {"G": ["H"], "A": ["G"], "B": ["G", "W"]}
 STATIC_CARDS = {"H": 2, "W": 2, "G": 3, "A": 2, "B": 3}
 STATIC_EVIDENCE = ["H", "W", "A", "B"]
 
-# Phase 3 in miniature: Z is a latent true level, R its noisy reference.
+# Phase 3b in miniature: Z is a latent cause (like Event) with observed children.
 #   H → Z → R,  Z → A,  Z → B ← W
 LATENT = {"Z": ["H"], "R": ["Z"], "A": ["Z"], "B": ["Z", "W"]}
 LATENT_CARDS = {"H": 2, "W": 2, "Z": 2, "R": 2, "A": 2, "B": 3}
@@ -39,11 +40,9 @@ def make_bn(
     target="G",
     evidence=STATIC_EVIDENCE,
     cards=STATIC_CARDS,
-    alpha=1.0,
+    **kw,
 ):
-    return DiscreteBN(
-        structure, target=target, evidence=evidence, cards=cards, alpha=alpha
-    )
+    return DiscreteBN(structure, target, evidence=evidence, cards=cards, **kw)
 
 
 def make_latent(
@@ -54,14 +53,15 @@ def make_latent(
     latent=("Z",),
     **kw,
 ):
-    return LatentBN(
-        structure,
-        target=target,
-        evidence=evidence,
-        cards=cards,
-        latent=list(latent),
-        **kw,
+    return DiscreteBN(
+        structure, target, evidence=evidence, cards=cards, latent=latent, **kw
     )
+
+
+def smoothed(counts, alpha):
+    """(counts + alpha) normalized over the last axis: the M-step, written out."""
+    c = counts + alpha
+    return c / c.sum(axis=-1, keepdims=True)
 
 
 def topo(structure):
