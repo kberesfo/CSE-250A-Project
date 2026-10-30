@@ -3,7 +3,7 @@ from typing import Self
 
 import pandas as pd
 
-from cse250a.modules.core import CPT, HOUR
+from cse250a.modules.core import CPT, Time
 
 from .base import Model
 
@@ -23,7 +23,7 @@ class HourOnlyBaseline(Model):
         *,
         n_bins: int | None = None,
         alpha: float = 1.0,
-        hour_col: str = HOUR,
+        hour_col: str = Time.HOUR,
     ):
         super().__init__(target, evidence=[hour_col])
         self.hour_col = hour_col
@@ -62,7 +62,7 @@ class PersistenceBaseline(Model):
         *,
         n_bins: int | None = None,
         alpha: float = 1.0,
-        hour_col: str = HOUR,
+        hour_col: str = Time.HOUR,
     ):
         super().__init__(target, evidence=None)  # privileged: reads the target at t-1
         self.hour_col = hour_col

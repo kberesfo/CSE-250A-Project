@@ -9,7 +9,6 @@ import pytest
 from cse250a.modules.core import (
     CPT,
     GASES,
-    HOUR,
     SENSORS,
     WEATHER,
     FitResult,
@@ -17,6 +16,7 @@ from cse250a.modules.core import (
     Messages,
     Network,
     Sensor,
+    Time,
     Weather,
     multi_gas_network,
     sensor_gases,
@@ -159,11 +159,11 @@ def test_sensor_gases():
 
 def test_single_gas_network():
     net = single_gas_network(target=Gas.CO, n_bins=3)
-    assert tuple(net.structure[Gas.CO]) == (HOUR,)
+    assert tuple(net.structure[Gas.CO]) == (Time.HOUR,)
     for s in SENSORS:
         assert tuple(net.structure[s]) == (Gas.CO, *WEATHER)
-    assert net.cards[HOUR] == 24 and net.cards[Gas.CO] == 3
-    assert set(net.evidence) == {HOUR, *WEATHER, *SENSORS}
+    assert net.cards[Time.HOUR] == 24 and net.cards[Gas.CO] == 3
+    assert set(net.evidence) == {Time.HOUR, *WEATHER, *SENSORS}
     assert tuple(net.latent) == ()
 
 
@@ -176,7 +176,7 @@ def test_single_gas_network_without_weather():
 def test_multi_gas_network(cross):
     net = multi_gas_network(cross=cross, n_bins=5)
     for g in GASES:
-        assert tuple(net.structure[g]) == (HOUR,)
+        assert tuple(net.structure[g]) == (Time.HOUR,)
         assert net.cards[g] == 5
     for s in SENSORS:
         assert tuple(net.structure[s]) == (*sensor_gases(s, GASES, cross), *WEATHER)
@@ -188,7 +188,7 @@ def test_no_reference_is_ever_evidence(build):
     """Evidence is hour, weather and sensors. A reference in evidence leaks the answer."""
     net = build()
     assert not set(net.evidence) & set(Gas)
-    assert set(net.evidence) <= {HOUR, *Weather, *Sensor}
+    assert set(net.evidence) <= {Time.HOUR, *Weather, *Sensor}
 
 
 # ── FitResult ──────────────────────────────────────────────────────────────────

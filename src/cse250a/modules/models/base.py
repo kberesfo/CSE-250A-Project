@@ -49,6 +49,7 @@ class Model(ABC):
         Rows are never dropped, so time-ordered models still see whole sequences."""
         if self.evidence is None:
             return data
+        
         masked = data.copy()
         hidden = [c for c in masked.columns if c not in self.evidence]
 
@@ -64,4 +65,5 @@ class Model(ABC):
         """
         proba = self.predict_proba(data)
         observed = data[self.target].notna()
+        
         return score(data.loc[observed, self.target], proba.loc[observed])

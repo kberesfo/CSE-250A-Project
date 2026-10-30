@@ -35,9 +35,9 @@ class Network:
     phase as a Network, usually through single_gas_network / multi_gas_network:
 
         network = Network(
-            structure={Gas.CO: (HOUR,), **{s: (Gas.CO, *WEATHER) for s in SENSORS}},
-            cards={HOUR: 24, Gas.CO: 3, **{w: 3 for w in WEATHER}, **{s: 3 for s in SENSORS}},
-            evidence=(HOUR, *WEATHER, *SENSORS),
+            structure={Gas.CO: (Time.HOUR,), **{s: (Gas.CO, *WEATHER) for s in SENSORS}},
+            cards={Time.HOUR: 24, Gas.CO: 3, **{w: 3 for w in WEATHER}, **{s: 3 for s in SENSORS}},
+            evidence=(Time.HOUR, *WEATHER, *SENSORS),
         ).validate()
 
     Enum members are strings, so plain names ("CO(GT)", "hour") work as keys too.
@@ -115,9 +115,9 @@ def single_gas_network(
 
     All five sensors respond to the one gas; there is no cross-sensitivity yet.
 
-    structure  {target: (HOUR,), every sensor: (target, *weather)}
-    cards      HOUR: 24; target, every sensor and every weather column: n_bins
-    evidence   (HOUR, *weather, *SENSORS); never the target
+    structure  {target: (Time.HOUR,), every sensor: (target, *weather)}
+    cards      Time.HOUR: 24; target, every sensor and every weather column: n_bins
+    evidence   (Time.HOUR, *weather, *SENSORS); never the target
     latent     ()
     With weather=(), each sensor's only parent is the target.
     Returns the Network after .validate().
@@ -135,9 +135,9 @@ def multi_gas_network(
 
     Every gas is its reference reading, treated as observed truth.
 
-    structure  every gas: (HOUR,); every sensor: (*sensor_gases(s, gases, cross), *weather)
-    cards      HOUR: 24; every gas, sensor and weather column: n_bins
-    evidence   (HOUR, *weather, *SENSORS); no reference, not even other gases',
+    structure  every gas: (Time.HOUR,); every sensor: (*sensor_gases(s, gases, cross), *weather)
+    cards      Time.HOUR: 24; every gas, sensor and weather column: n_bins
+    evidence   (Time.HOUR, *weather, *SENSORS); no reference, not even other gases',
                or the score leaks
     latent     ()
     cross=False is the nominal-only ablation. S5 then has no gas parent and depends
