@@ -176,3 +176,15 @@ class Network:
         for n in self.structure:
             visit(n)
         return tuple(order)
+
+    def __repr__(self) -> str:
+        lines = [
+            f"Network({len(self.structure)} nodes, inputs: {', '.join(map(str, self.inputs))})"
+        ]
+        for node in self.nodes:
+            parents = ", ".join(map(str, self.structure[node]))
+            kind = "  (latent)" if node in self.latent else ""
+            lines.append(
+                f"  {node!s:>14} | {parents:28}  CPT shape {self.shape(node)}{kind}"
+            )
+        return "\n".join(lines)
