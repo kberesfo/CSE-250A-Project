@@ -1,4 +1,4 @@
-"""core/: columns, CPT, Network and the network builders, FitResult, Messages."""
+"""core/: columns, CPT, FitResult, Messages. Network has its own file (test_network.py)."""
 
 import itertools
 
@@ -6,22 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cse250a.modules.core import (
-    CPT,
-    GASES,
-    SENSORS,
-    WEATHER,
-    FitResult,
-    Gas,
-    Messages,
-    Network,
-    Sensor,
-    Time,
-    Weather,
-    multi_gas_network,
-    sensor_gases,
-    single_gas_network,
-)
+from cse250a.modules.core import CPT, FitResult, Gas, Messages, Sensor
 
 # ── columns ────────────────────────────────────────────────────────────────────
 
@@ -30,9 +15,7 @@ def test_enum_members_are_the_column_names():
     df = pd.DataFrame({"CO(GT)": [1.0], "PT08.S4(NO2)": [2.0]})
     assert df[Gas.CO].tolist() == [1.0]
     assert df[Sensor.S4].tolist() == [2.0]
-    assert {Gas.CO: 1}[
-        "CO(GT)"
-    ] == 1  # usable as dict keys interchangeably with strings
+    assert {Gas.CO: 1}["CO(GT)"] == 1  # usable as dict keys interchangeably with strings
 
 
 def test_latent_names():
@@ -76,119 +59,6 @@ def test_to_frame_has_a_row_per_parent_combination():
     frame = cpt.to_frame()
     assert frame.shape == (6, 4)
     np.testing.assert_allclose(frame.sum(axis=1), 1)
-
-
-# ── Network ────────────────────────────────────────────────────────────────────
-
-
-def tiny_network(**overrides):
-    kwargs = {
-        "structure": {
-            "B": ("A", "W"),
-            "A": ("H",),
-            "C": ("A",),
-        },  # deliberately not in order
-        "cards": {"H": 24, "W": 3, "A": 3, "B": 2, "C": 2},
-        "evidence": ("H", "W", "B"),
-    }
-    return Network(**(kwargs | overrides))
-
-
-def test_nodes_are_topologically_ordered():
-    nodes = tiny_network().nodes
-    assert set(nodes) == {"A", "B", "C"}
-    assert nodes.index("A") < nodes.index("B") and nodes.index("A") < nodes.index("C")
-
-
-def test_inputs_observed_children():
-    net = tiny_network(latent=("A",), evidence=("H", "W"))
-    assert set(net.inputs) == {"H", "W"}
-    assert set(net.observed) == {"B", "C"}
-    assert set(net.children("A")) == {"B", "C"}
-    assert net.children("B") == ()
-
-
-def test_shape_is_parent_cards_then_node_card():
-    assert tiny_network().shape("B") == (3, 3, 2)
-    assert tiny_network().shape("A") == (24, 3)
-
-
-def test_temporal_shape_puts_previous_hour_first():
-    net = tiny_network(prev={"A": ("A",)})
-    assert net.is_temporal
-    assert net.shape("A") == (3, 24, 3)  # A_{t-1}, H, A
-    assert not tiny_network().is_temporal
-
-
-def test_validate_returns_self_when_fine():
-    net = tiny_network()
-    assert net.validate() is net
-    net.validate(columns=["H", "W", "A", "B", "C"])
-
-
-@pytest.mark.parametrize(
-    "overrides, names",
-    [
-        (
-            {"structure": {"A": ("H", "B"), "B": ("A", "W"), "C": ("A",)}},
-            r"A|B",
-        ),  # A ↔ B cycle
-        ({"cards": {"H": 24, "W": 3, "A": 3, "B": 2}}, r"\bC\b"),  # C has no card
-        ({"latent": ("A",), "evidence": ("H", "A")}, r"\bA\b"),  # latent in evidence
-        ({"prev": {"A": ("ghost",)}}, r"ghost"),  # prev names an unknown node
-    ],
-)
-def test_validate_reports_problems(overrides, names):
-    """Each case has exactly one problem; the message should name the culprit."""
-    with pytest.raises(ValueError, match=names):
-        tiny_network(**overrides).validate()
-
-
-def test_validate_checks_columns():
-    with pytest.raises(ValueError, match=r"\bC\b"):
-        tiny_network().validate(columns=["H", "W", "A", "B"])
-
-
-def test_sensor_gases():
-    assert sensor_gases(Sensor.S4, GASES, cross=True) == (Gas.NO2, Gas.CO)
-    assert sensor_gases(Sensor.S4, GASES, cross=False) == (Gas.NO2,)
-    assert sensor_gases(Sensor.S2, GASES, cross=True) == (Gas.C6H6,)
-    assert sensor_gases(Sensor.S2, GASES, cross=False) == ()  # NMHC isn't modeled
-    assert sensor_gases(Sensor.S1, [Gas.NO2], cross=True) == ()  # CO not in this model
-
-
-def test_single_gas_network():
-    net = single_gas_network(target=Gas.CO, n_bins=3)
-    assert tuple(net.structure[Gas.CO]) == (Time.HOUR,)
-    for s in SENSORS:
-        assert tuple(net.structure[s]) == (Gas.CO, *WEATHER)
-    assert net.cards[Time.HOUR] == 24 and net.cards[Gas.CO] == 3
-    assert set(net.evidence) == {Time.HOUR, *WEATHER, *SENSORS}
-    assert tuple(net.latent) == ()
-
-
-def test_single_gas_network_without_weather():
-    net = single_gas_network(weather=())
-    assert all(tuple(net.structure[s]) == (Gas.CO,) for s in SENSORS)
-
-
-@pytest.mark.parametrize("cross", [True, False])
-def test_multi_gas_network(cross):
-    net = multi_gas_network(cross=cross, n_bins=5)
-    for g in GASES:
-        assert tuple(net.structure[g]) == (Time.HOUR,)
-        assert net.cards[g] == 5
-    for s in SENSORS:
-        assert tuple(net.structure[s]) == (*sensor_gases(s, GASES, cross), *WEATHER)
-    assert Gas.NMHC not in net.structure
-
-
-@pytest.mark.parametrize("build", [single_gas_network, multi_gas_network])
-def test_no_reference_is_ever_evidence(build):
-    """Evidence is hour, weather and sensors. A reference in evidence leaks the answer."""
-    net = build()
-    assert not set(net.evidence) & set(Gas)
-    assert set(net.evidence) <= {Time.HOUR, *Weather, *Sensor}
 
 
 # ── FitResult ──────────────────────────────────────────────────────────────────
