@@ -1,147 +1,178 @@
 # modules/core/network.py
-from collections.abc import Iterable, Sequence
+"""What a network can be made of. Which network, which edges and which evidence
+a phase uses is decided in that phase's notebook, not here."""
+
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Self
 
-from .columns import Gas, Sensor, Time, Weather  # noqa: F401
+from .columns import Gas, Sensor, Time, Weather
 
-SENSORS = tuple(Sensor)
-GASES = (Gas.CO, Gas.C6H6, Gas.NOX, Gas.NO2)  # NMHC left out
-WEATHER = (Weather.T, Weather.RH)  # docs/decisions.md 2026-10-19
+# Every name a non-latent node or input may have: the dataset's columns.
+COLUMNS: frozenset[str] = frozenset({*Gas, *Sensor, *Weather, *Time})
 
-# Solid edges: the gas each sensor targets. Ignored when that gas isn't in the model.
-NOMINAL: dict[Sensor, tuple[Gas, ...]] = {
-    Sensor.S1: (Gas.CO,),
-    Sensor.S2: (Gas.NMHC,),
-    Sensor.S3: (Gas.NOX,),
-    Sensor.S4: (Gas.NO2,),
-    Sensor.S5: (),  # no O3 reference
-}
-# Dashed edges: cross-sensitivities, as drawn in figures 2–3.
-# TODO(EDA): confirm with Spearman sensor–gas correlations; keep 1–2 per sensor.
-CROSS: dict[Sensor, tuple[Gas, ...]] = {
-    Sensor.S2: (Gas.C6H6,),
-    Sensor.S4: (Gas.CO,),
-    Sensor.S5: (Gas.NO2,),
-}
+# Shapes the notebooks fill in.
+Structure = Mapping[str, tuple[str, ...]]  # node → same-hour parents
+Cards = Mapping[str, int]  # variable → number of states
+Edges = Mapping[Sensor, tuple[Gas, ...]]  # sensor → gases it responds to
+Evidence = tuple[str, ...]  # columns visible to a query
 
 
 @dataclass(frozen=True)
 class Network:
-    """The structure of a discrete Bayesian network, as one object.
+    """The structure of a discrete Bayesian network: the graph and the number of
+    states of every variable. Nothing about queries: the target and the evidence
+    are passed when predicting, so one fitted network answers many queries.
 
-    Everything a model needs to know about the graph travels together, so a model
-    takes one argument (DiscreteBN(network, target)) and each notebook builds its
-    phase as a Network, usually through single_gas_network / multi_gas_network:
+    Each phase builds its Network in its notebook, e.g.
 
+        nominal = {Sensor.S1: (Gas.CO,), Sensor.S3: (Gas.NOX,), Sensor.S4: (Gas.NO2,)}
         network = Network(
-            structure={Gas.CO: (Time.HOUR,), **{s: (Gas.CO, *WEATHER) for s in SENSORS}},
-            cards={Time.HOUR: 24, Gas.CO: 3, **{w: 3 for w in WEATHER}, **{s: 3 for s in SENSORS}},
-            evidence=(Time.HOUR, *WEATHER, *SENSORS),
-        ).validate()
+            structure={
+                **{g: (Time.HOUR,) for g in gases},
+                **{s: (*nominal.get(s, ()), *weather) for s in Sensor},
+            },
+            cards={**disc.cards, **TIME_CARDS},
+        ).validate(train.columns)
 
     Enum members are strings, so plain names ("CO(GT)", "hour") work as keys too.
 
     Node kinds
       modeled   a key of `structure`; gets a CPT
-      input     appears only as a parent (hour, weather); conditioned on, no CPT
+      input     appears only as a parent (hour, weather); conditioned on, no CPT,
+                so it must be observed on every row and in every query's evidence
       latent    modeled, but never a data column (Phase 3's Gas.CO.latent == "Gas_CO")
+
+    Treat a Network as read-only after validate(). (The dicts are plain copies,
+    not MappingProxyType, so fitted models can be pickled.)
     """
 
-    structure: dict[str, tuple[str, ...]]  # node → parents in the same hour
-    cards: dict[str, int]  # number of states for every modeled node and input
-    evidence: tuple[str, ...]  # columns visible at predict time; never a reference
+    structure: Structure
+    cards: Cards  # number of states for every modeled node and input
     latent: tuple[str, ...] = ()  # modeled nodes with no data column
-    prev: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    prev: Structure = field(default_factory=dict)
     # Phase 4: node → parents from the previous hour,
     # e.g. {Gas.CO.latent: (Gas.CO.latent,)}. Empty for a static network.
 
+    def __post_init__(self):
+        # copies, so the caller's dicts can't change the network afterwards
+        def copy(m: Structure) -> dict[str, tuple[str, ...]]:
+            return {k: tuple(v) for k, v in m.items()}
+
+        object.__setattr__(self, "structure", copy(self.structure))
+        object.__setattr__(self, "prev", copy(self.prev))
+        object.__setattr__(self, "cards", dict(self.cards))
+        object.__setattr__(self, "latent", tuple(self.latent))
+
     @property
     def nodes(self) -> tuple[str, ...]:
-        """Modeled nodes in topological order (every parent before its children)."""
-        raise NotImplementedError
+        """Modeled nodes in topological order (every parent before its children).
+        Raises ValueError on a cycle within an hour."""
+        return self._topo_order()
 
     @property
     def inputs(self) -> tuple[str, ...]:
-        """Names that appear as a parent but are not keys of `structure`."""
-        raise NotImplementedError
+        """Names that appear as a parent but are not keys of `structure`, in
+        first-seen order."""
+        seen = dict.fromkeys(p for ps in self.structure.values() for p in ps)
+        return tuple(p for p in seen if p not in self.structure)
 
     @property
     def observed(self) -> tuple[str, ...]:
         """Modeled nodes that are data columns (nodes minus latent)."""
-        raise NotImplementedError
+        return tuple(n for n in self.structure if n not in self.latent)
 
     @property
     def is_temporal(self) -> bool:
         """True when any node has parents in the previous hour."""
-        raise NotImplementedError
+        return any(self.prev.values())
 
     def children(self, node: str) -> tuple[str, ...]:
         """Modeled nodes that list `node` as a same-hour parent."""
-        raise NotImplementedError
+        return tuple(n for n, ps in self.structure.items() if node in ps)
+
+    def family(self, node: str) -> tuple[str, ...]:
+        """(*parents, node): the axes of the node's CPT, in order."""
+        return (*self.structure[node], node)
 
     def shape(self, node: str) -> tuple[int, ...]:
         """CPT table shape for `node`: (*parent cards, node card), parents in
         `structure` order. For a temporal node, its previous-hour parents come first."""
-        raise NotImplementedError
+        prev = tuple(self.cards[p] for p in self.prev.get(node, ()))
+        return prev + tuple(self.cards[c] for c in self.family(node))
 
     def validate(self, columns: Iterable[str] | None = None) -> Self:
         """Raise ValueError listing every problem, else return self (for chaining).
 
-        Checks: every parent is modeled or an input; no cycle within an hour;
-        every modeled node and input has a card; latent nodes are not in evidence;
-        `prev` only names modeled nodes. With `columns` (a DataFrame's columns),
-        also check every observed node and input is a column.
+        Checks:
+          - every non-latent node and input is a known column (COLUMNS), so a
+            typo raises instead of silently becoming a hidden node
+          - every latent node is modeled and is not a known column
+          - no cycle within an hour
+          - every modeled node and input has a card ≥ 1
+          - `prev` only names modeled nodes
+        With `columns` (a DataFrame's columns), also: every observed node and
+        input is a column of the data.
         """
-        raise NotImplementedError
+        problems = []
 
+        unknown = [c for c in (*self.observed, *self.inputs) if c not in COLUMNS]
+        if unknown:
+            problems.append(
+                f"not dataset columns (typo, or forgot `latent`?): {unknown}"
+            )
 
-def sensor_gases(sensor: Sensor, gases: Sequence[Gas], cross: bool) -> tuple[Gas, ...]:
-    """The gas parents of `sensor`: its NOMINAL gas, plus its CROSS gases when
-    cross=True, keeping only gases that are in `gases`, nominal first, no repeats.
+        stray = [z for z in self.latent if z not in self.structure]
+        if stray:
+            problems.append(f"latent nodes not in structure: {stray}")
+        clash = [z for z in self.latent if z in COLUMNS]
+        if clash:
+            problems.append(f"latent nodes named like dataset columns: {clash}")
 
-    e.g. sensor_gases(Sensor.S4, GASES, cross=True)  → (Gas.NO2, Gas.CO)
-         sensor_gases(Sensor.S2, GASES, cross=False) → ()   (NMHC not modeled)
-    """
-    raise NotImplementedError
+        try:
+            self._topo_order()
+        except ValueError as e:
+            problems.append(str(e))
 
+        no_card = [c for c in (*self.structure, *self.inputs) if c not in self.cards]
+        if no_card:
+            problems.append(f"no entry in cards for {no_card}")
+        bad_card = [c for c, k in self.cards.items() if k < 1]
+        if bad_card:
+            problems.append(f"cards must be ≥ 1 for {bad_card}")
 
-def single_gas_network(
-    target: Gas = Gas.CO,
-    weather: Sequence[Weather] = WEATHER,
-    n_bins: int = 3,
-) -> Network:
-    """Phase 1: Hour → target → S1…S5 ← weather.
+        for n, ps in self.prev.items():
+            bad = [x for x in (n, *ps) if x not in self.structure]
+            if bad:
+                problems.append(f"prev[{n!s}] names unmodeled nodes {bad}")
 
-    All five sensors respond to the one gas; there is no cross-sensitivity yet.
+        if columns is not None:
+            cols = set(columns)
+            absent = [c for c in (*self.observed, *self.inputs) if c not in cols]
+            if absent:
+                problems.append(f"columns missing from data: {absent}")
 
-    structure  {target: (Time.HOUR,), every sensor: (target, *weather)}
-    cards      Time.HOUR: 24; target, every sensor and every weather column: n_bins
-    evidence   (Time.HOUR, *weather, *SENSORS); never the target
-    latent     ()
-    With weather=(), each sensor's only parent is the target.
-    Returns the Network after .validate().
-    """
-    raise NotImplementedError
+        if problems:
+            raise ValueError("invalid network:\n  " + "\n  ".join(problems))
+        return self
 
+    def _topo_order(self) -> tuple[str, ...]:
+        """Modeled nodes, parents first. Raises ValueError on a cycle within an hour."""
+        order, done, visiting = [], set(), set()
 
-def multi_gas_network(
-    gases: Sequence[Gas] = GASES,
-    weather: Sequence[Weather] = WEATHER,
-    cross: bool = True,
-    n_bins: int = 3,
-) -> Network:
-    """Phase 2: Hour → every gas → sensors (nominal + cross) ← weather.
+        def visit(n: str) -> None:
+            if n in done:
+                return
+            if n in visiting:
+                raise ValueError(f"cycle within an hour through {n!s}")
+            visiting.add(n)
+            for p in self.structure.get(n, ()):
+                if p in self.structure:
+                    visit(p)
+            visiting.discard(n)
+            done.add(n)
+            order.append(n)
 
-    Every gas is its reference reading, treated as observed truth.
-
-    structure  every gas: (Time.HOUR,); every sensor: (*sensor_gases(s, gases, cross), *weather)
-    cards      Time.HOUR: 24; every gas, sensor and weather column: n_bins
-    evidence   (Time.HOUR, *weather, *SENSORS); no reference, not even other gases',
-               or the score leaks
-    latent     ()
-    cross=False is the nominal-only ablation. S5 then has no gas parent and depends
-    on weather only. S2 has no gas parent at all, since NMHC isn't modeled.
-    Returns the Network after .validate().
-    """
-    raise NotImplementedError
+        for n in self.structure:
+            visit(n)
+        return tuple(order)

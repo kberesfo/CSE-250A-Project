@@ -4,9 +4,11 @@ The brute force enumerates every assignment of every unknown node with plain
 loops. It is slow (fine for 3–4 nodes) but obviously correct, so when a model
 disagrees with it, the model is wrong.
 
-Models are built through `make_bn` / `make_latent` (both a DiscreteBN; the second
-with a latent node), so if the constructor signature changes (e.g. to take a
-Network), only these two helpers change.
+Node names are real dataset columns, because Network.validate rejects anything
+else as a typo. The short aliases (H, W, G, A, B, Z, R) keep the tests readable.
+
+Models are built through `make_bn` / `make_latent`, so if the constructor
+signature changes again, only these two helpers change.
 """
 
 import itertools
@@ -16,7 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cse250a.modules.core import CPT
+from cse250a.modules.core import CPT, Gas, Network, Sensor, Time, Weather
 from cse250a.modules.models import DiscreteBN
 
 # ── tiny networks ──────────────────────────────────────────────────────────────
@@ -24,38 +26,36 @@ from cse250a.modules.models import DiscreteBN
 #   H (input) → G → A
 #               G → B ← W (input)
 
-STATIC = {"G": ["H"], "A": ["G"], "B": ["G", "W"]}
-STATIC_CARDS = {"H": 2, "W": 2, "G": 3, "A": 2, "B": 3}
-STATIC_EVIDENCE = ["H", "W", "A", "B"]
+H, W = Time.HOUR, Weather.T  # inputs
+G, A, B = Gas.CO, Sensor.S1, Sensor.S4  # modeled
+Z, R = Gas.CO.latent, Gas.CO  # Phase 3: latent true CO, and its reference reading
 
-# Phase 3b in miniature: Z is a latent cause (like Event) with observed children.
+STATIC = {G: (H,), A: (G,), B: (G, W)}
+STATIC_CARDS = {H: 2, W: 2, G: 3, A: 2, B: 3}
+STATIC_EVIDENCE = (H, W, A, B)
+
+# Phase 3 in miniature: Z is a latent cause with observed children.
 #   H → Z → R,  Z → A,  Z → B ← W
-LATENT = {"Z": ["H"], "R": ["Z"], "A": ["Z"], "B": ["Z", "W"]}
-LATENT_CARDS = {"H": 2, "W": 2, "Z": 2, "R": 2, "A": 2, "B": 3}
-LATENT_EVIDENCE = ["H", "W", "A", "B"]
+LATENT = {Z: (H,), R: (Z,), A: (Z,), B: (Z, W)}
+LATENT_CARDS = {H: 2, W: 2, Z: 2, R: 2, A: 2, B: 3}
+LATENT_EVIDENCE = (H, W, A, B)
 
 
-def make_bn(
-    structure=STATIC,
-    target="G",
-    evidence=STATIC_EVIDENCE,
-    cards=STATIC_CARDS,
-    **kw,
-):
-    return DiscreteBN(structure, target, evidence=evidence, cards=cards, **kw)
+def static_network(**overrides) -> Network:
+    return Network(**({"structure": STATIC, "cards": STATIC_CARDS} | overrides))
 
 
-def make_latent(
-    structure=LATENT,
-    target="R",
-    evidence=LATENT_EVIDENCE,
-    cards=LATENT_CARDS,
-    latent=("Z",),
-    **kw,
-):
-    return DiscreteBN(
-        structure, target, evidence=evidence, cards=cards, latent=latent, **kw
-    )
+def latent_network(**overrides) -> Network:
+    kw = {"structure": LATENT, "cards": LATENT_CARDS, "latent": (Z,)}
+    return Network(**(kw | overrides))
+
+
+def make_bn(network=None, **kw) -> DiscreteBN:
+    return DiscreteBN(network or static_network(), **kw)
+
+
+def make_latent(network=None, **kw) -> DiscreteBN:
+    return DiscreteBN(network or latent_network(), **kw)
 
 
 def smoothed(counts, alpha):

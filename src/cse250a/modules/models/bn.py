@@ -1,12 +1,12 @@
 # modules/models/bn.py
 import itertools
-from collections.abc import Mapping, Sequence
-from typing import Self
+from collections.abc import Mapping
+from typing import ClassVar, Self
 
 import numpy as np
 import pandas as pd
 
-from cse250a.modules.core import CPT, FitResult
+from cse250a.modules.core import CPT, FitResult, Network
 
 from .base import Model
 
@@ -37,16 +37,13 @@ class DiscreteBN(Model):
     forward-backward; fit, the M-step and prediction stay as they are.
     """
 
-    name = "discrete_bn"
+    name: ClassVar[str] = "discrete_bn"
+    privileged: ClassVar[bool] = False
 
     def __init__(
         self,
-        structure: Mapping[str, Sequence[str]],
-        target: str,
+        network: Network,
         *,
-        evidence: Sequence[str],
-        cards: Mapping[str, int],
-        latent: Sequence[str] = (),
         alpha: float = 1.0,
         max_iter: int = 100,
         tol: float = 1e-4,
@@ -72,10 +69,12 @@ class DiscreteBN(Model):
             init: Optional starting tables for chosen nodes, overriding the
                 default start.
         """
-        super().__init__(target, evidence)
-        self.structure = {node: tuple(ps) for node, ps in structure.items()}
-        self.cards = dict(cards)
-        self.latent = tuple(latent)
+        self.network = network.validate()
+        if self.network.is_temporal:
+            raise NotImplementedError(
+                f"{self.name}: temporal networks (prev) need the HMM subclass"
+            )
+        self.requires = self.network.inputs
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
@@ -89,35 +88,31 @@ class DiscreteBN(Model):
     def fit(self, train: pd.DataFrame) -> Self:
         """EM.
 
-        1. Check every non-latent node and every input is a column of `train`
-           (raise ValueError naming the missing ones), and that every node and
-           input has an entry in `cards`.
-        2. Add each latent node to `train` as an all-NaN column.
+        1. Validate the network against train's columns; raise if any row has a
+           missing input (inputs have no CPT, so they can't be marginalized).
+        2. Latent nodes have no column; _unnormalized treats a node missing from
+           the row as hidden, so they are hidden on every row.
         3. self.cpts = self._init_cpts(train); self.result = FitResult().
         4. Repeat up to max_iter times:
-             E-step:  counts, loglik = self._expected_counts(train)
-             record:  self.result.record(loglik + self._log_prior())
-             stop:    if self.result.should_stop(self.tol): converged, break
-             M-step:  self.cpts[node] = CPT.from_counts(node, parents,
-                                                         counts[node], self.alpha)
-        With alpha > 0 this is MAP-EM: loglik + log-prior is the quantity that
-        never decreases. self.result.is_monotone() checks that.
+                E-step:  counts, loglik = self._expected_counts(train)
+                record:  self.result.record(loglik + self._log_prior())
+                stop:    if self.result.should_stop(self.tol): converged, break
+                M-step:  self.cpts[node] = CPT.from_counts(node, parents,
+                                                            counts[node], self.alpha)
+            With alpha > 0 this is MAP-EM: loglik + log-prior is the quantity that
+            never decreases. self.result.is_monotone() checks that.
         """
-        # AI DEFENSIVE
-        inputs = {p for ps in self.structure.values() for p in ps} - set(self.structure)
-        needed = (set(self.structure) - set(self.latent)) | inputs
-        missing = sorted(needed - set(train.columns))
-        if missing:
-            raise ValueError(f"{self.name}: columns missing from train: {missing}")
-        no_card = sorted((set(self.structure) | inputs) - set(self.cards))
-        if no_card:
-            raise ValueError(f"{self.name}: no entry in cards for: {no_card}")
-        # END AI DEFENSIVE
+        # check if matches network
+        self.network.validate(train.columns)
+        # check for missing inputs ex: missing hour
+        missing_count = train[list(self.network.inputs)].isna().any(axis=1).sum()
 
-        # copy of train adding latent nodes
-        train = train.assign(**{z: np.nan for z in self.latent})
+        if missing_count:
+            raise ValueError(
+                f"{self.name}: {missing_count} rows have a missing input; inputs have "
+                "no CPT, so drop these rows in preprocessing"
+            )
 
-        # 3. self.cpts = self._init_cpts(train)
         self.cpts = self._init_cpts(train)
         self.result = FitResult()
 
@@ -131,7 +126,7 @@ class DiscreteBN(Model):
                 self.result.converged = True
                 break
             # m-step
-            for node, parents in self.structure.items():
+            for node, parents in self.network.structure.items():
                 self.cpts[node] = CPT.from_counts(
                     node,
                     parents,
@@ -155,11 +150,11 @@ class DiscreteBN(Model):
         complete = self._complete_counts(train)
         out = {}
 
-        for node, parents in self.structure.items():
-            cols = [*parents, node]
-            shape = tuple(self.cards[c] for c in cols)
+        for node, parents in self.network.structure.items():
+            cols = self.network.family(node)
+            shape = self.network.shape(node)
 
-            if any(c in self.latent for c in cols):
+            if any(c in self.network.latent for c in cols):
                 k = shape[-1]
                 n_rows = int(np.prod(shape[:-1]))
                 table = rng.dirichlet(np.ones(k), size=n_rows).reshape(shape)
@@ -168,6 +163,11 @@ class DiscreteBN(Model):
                 cpt = CPT.from_counts(node, parents, complete[node], self.alpha)  # 4
 
             if node in self.init:
+                if np.shape(self.init[node]) != self.network.shape(node):
+                    raise ValueError(
+                        f"{self.name}: init for {node} has shape {np.shape(self.init[node])}, "
+                        f"expected {shape}"
+                    )
                 cpt = CPT(
                     node, tuple(parents), np.asarray(self.init[node], dtype=float)
                 )
@@ -182,17 +182,16 @@ class DiscreteBN(Model):
         HourOnlyBaseline.fit, once per node. Families with a latent member get
         all zeros (no complete rows)."""
         out = {}
-        for node, parents in self.structure.items():
-            cols = [*parents, node]
-            # shape from self.cards
-            shape = tuple(self.cards[c] for c in cols)
+        for node in self.network.structure:
+            cols = self.network.family(node)
+            shape = self.network.shape(node)
 
             # if any column in cols is missing from data (a latent node):
             if any(c not in data.columns for c in cols):
                 out[node] = np.zeros(shape)
                 continue
 
-            rows = data[cols].to_numpy()
+            rows = data[list(cols)].to_numpy()
             complete = ~np.isnan(rows).any(axis=1)
             counts = np.zeros(shape)
             keep_rows = rows[complete].astype(int)
@@ -222,10 +221,7 @@ class DiscreteBN(Model):
         Returns:
             tuple[dict[str, np.ndarray], float]: _description_
         """
-        counts = {
-            n: np.zeros(tuple(self.cards[c] for c in [*parents, n]))
-            for n, parents in self.structure.items()
-        }
+        counts = {n: np.zeros(self.network.shape(n)) for n in self.network.structure}
         loglik = 0.0
 
         for _, row in data.iterrows():
@@ -234,8 +230,8 @@ class DiscreteBN(Model):
             loglik += np.log(z)
             joint = table / z
 
-            for node, parents in self.structure.items():
-                family = [*parents, node]
+            for node in self.network.structure:
+                family = self.network.family(node)
                 # family members that are in hidden
                 fam_hidden = [x for x in family if x in hidden]
                 # hidden.index(...) for each of fam_hidden
@@ -277,15 +273,14 @@ class DiscreteBN(Model):
 
     # ── inference ──────────────────────────────────────────────────────────
 
-    def _predict_proba(self, data: pd.DataFrame) -> pd.DataFrame:
-        """self.posterior(data, self.target) as a DataFrame: index = data.index,
-        one column per target bin (0 … cards[target] - 1). Latent nodes are added
-        as all-NaN columns first, as in fit."""
+    def _predict_proba(self, data: pd.DataFrame, target: str) -> pd.DataFrame:
+        """self.posterior(data, target) as a DataFrame: index = data.index,
+        one column per target bin (0 … cards[target] - 1)."""
         if not self.cpts:
             raise RuntimeError(f"{self.name}: call fit() before predicting")
 
-        rows = self.posterior(data, self.target)
-        k = self.cards[self.target]
+        rows = self.posterior(data, target)
+        k = self.network.cards[target]
         return pd.DataFrame(rows, index=data.index, columns=range(k))
 
     def _unnormalized(
@@ -301,17 +296,21 @@ class DiscreteBN(Model):
         Returns:
             tuple[list[str], np.ndarray]: _description_
         """
-        # NOTE:
-        hidden = [n for n in self.structure if n not in row.index or pd.isna(row[n])]
-        table = np.zeros(tuple(self.cards[h] for h in hidden))  # shape (3, 2)
+
+        hidden = [
+            n for n in self.network.structure if n not in row.index or pd.isna(row[n])
+        ]
+        table = np.zeros(tuple(self.network.cards[h] for h in hidden))
 
         # print(list(zip(hidden, states)))  # [("G", 2), ("A", 1)]   pairs them up
-        for states in itertools.product(*[range(self.cards[h]) for h in hidden]):
+        for states in itertools.product(
+            *[range(self.network.cards[h]) for h in hidden]
+        ):
             # print(dict(zip(hidden, states)))  # {"G": 2, "A": 1}       look up by name
             assignment = dict(zip(hidden, states))
             factor = 1.0
-            for node, parents in self.structure.items():
-                keys = [*parents, node]
+            for node in self.network.structure:
+                keys = self.network.family(node)
                 # assignment[var] if var is hidden, else int(row[var])
                 index = tuple(
                     assignment[var] if var in hidden else int(row[var]) for var in keys
@@ -365,7 +364,7 @@ class DiscreteBN(Model):
         Returns:
             np.ndarray: calculated posterior for the given node
         """
-        out = np.zeros((len(data), self.cards[node]))
+        out = np.zeros((len(data), self.network.cards[node]))
 
         for i, (_, row) in enumerate(data.iterrows()):
             hidden, joint = self._joint(row)
