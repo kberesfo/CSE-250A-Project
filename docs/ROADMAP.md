@@ -13,7 +13,7 @@ Each phase builds on the one before it. All phases share the same data module, d
 |---|---|---|---|---|
 | 1 | Single gas: `Hour → Ref → S₁…S₅ ← W` | the reference reading (observed) | MLE | Baseline: how well do the sensors recover one gas? |
 | 2 | All gases; each sensor has its nominal gas plus cross-sensitivity gases | the reference reading (observed) | MLE | Does modeling several gases and cross-sensitivity help? |
-| 3 | Phase 2 with a latent `Gas_g` inserted above each `Ref_g` | latent; `Ref_g` is a noisy child | EM | Does using hours with missing reference readings help? |
+| 3a | Phase 2 with a latent `Gas_g` inserted above each `Ref_g` | latent; `Ref_g` is a noisy child | EM | Does using hours with missing reference readings help? |
 | 3b | Phase 3 + air quality output `AQ` | latent | none added (AQ is computed) | How well can air quality be predicted from sensors alone? |
 | 4 | Phase 3b chained hour to hour (HMM) | latent, carried over each hour | Baum–Welch | Does temporal structure help? Hour-by-hour AQ. |
 
