@@ -43,3 +43,8 @@ class Weather(StrEnum):
     T = "T"
     RH = "RH"
     AH = "AH"
+
+
+class Latent(StrEnum):
+    """Names of latent nodes (never data columns)."""
+    EMISSION_REGIME = "EmissionRegime"
