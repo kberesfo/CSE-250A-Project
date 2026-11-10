@@ -164,7 +164,7 @@ class Model(ABC):
                 evaluate(test, Gas.CO.latent, evidence, against=Gas.CO).
 
         Returns:
-            score's dict: n, accuracy, macro_f1, bere, log_likelihood,
+            score's dict: n, accuracy, macro_f1, ber, log_likelihood,
             mean_log_likelihood, confusion.
         """
         against = against or target
