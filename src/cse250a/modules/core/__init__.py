@@ -1,4 +1,4 @@
-from .columns import TIME_CARDS, Gas, Sensor, Time, Weather
+from .columns import TIME_CARDS, Gas, Latent, Sensor, Time, Weather
 from .cpt import CPT
 from .messages import Messages
 from .network import COLUMNS, Network
@@ -10,6 +10,7 @@ __all__ = [
     "TIME_CARDS",
     "FitResult",
     "Gas",
+    "Latent",
     "Messages",
     "Network",
     "Sensor",
