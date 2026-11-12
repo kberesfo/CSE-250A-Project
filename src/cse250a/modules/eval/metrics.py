@@ -76,7 +76,7 @@ def score(y_true: pd.Series, proba: pd.DataFrame) -> dict:
                 guessing one bin scores about 1/k.
             macro_f1: One-vs-rest F1 averaged over bins, so every bin counts
                 equally however rare it is.
-            bere: One-vs-rest balanced error rate, 1 − (TPR + TNR)/2, averaged
+            ber: One-vs-rest balanced error rate, 1 − (TPR + TNR)/2, averaged
                 over bins. Lower is better.
             log_likelihood: Σ log P(true bin). Higher (closer to 0) is better;
                 rewards being confident when right, punishes being confident
@@ -92,7 +92,7 @@ def score(y_true: pd.Series, proba: pd.DataFrame) -> dict:
         bn = DiscreteBN(network).fit(train)
         hour = HourOnlyBaseline(cards=network.cards).fit(train)
 
-        metrics = ("n", "accuracy", "macro_f1", "bere", "mean_log_likelihood")
+        metrics = ("n", "accuracy", "macro_f1", "ber", "mean_log_likelihood")
         rows = []
         for gas in gases:
             for model in (bn, hour):
@@ -111,16 +111,16 @@ def score(y_true: pd.Series, proba: pd.DataFrame) -> dict:
 
     labels = cols
     f1 = []
-    bere = []
+    ber = []
     for k in labels:
         f1.append(calc_f1(y_pred, y, k))
-        bere.append(calc_BER(y_pred, y, k))
+        ber.append(calc_BER(y_pred, y, k))
 
     return {
         "n": len(y),
         "accuracy": float(np.mean(y_pred == y)),
         "macro_f1": float(np.mean(f1)),
-        "bere": float(np.mean(bere)),
+        "ber": float(np.mean(ber)),
         "log_likelihood": float(np.log(p_true).sum()),
         "mean_log_likelihood": float(
             np.log(p_true).mean()

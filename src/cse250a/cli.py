@@ -9,7 +9,7 @@ from cse250a.modules.config import config
 
 def run(model: str, name: str | None) -> Path:
     """Create a run directory and save the resolved config alongside its outputs."""
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
     run_dir = config.paths.results_dir / f"{name or model}_{stamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "config.json").write_text(config.model_dump_json(indent=2))
