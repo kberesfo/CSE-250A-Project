@@ -14,7 +14,7 @@ def df():
 
 
 def test_calendar_columns_present_and_complete(df):
-    for col in (Time.HOUR, Time.DOW, Time.IS_WEEKDAY):
+    for col in (Time.HOUR, Time.DOW, Time.IS_WEEKDAY, Time.SEASON):
         assert col in df.columns
         assert df[col].notna().all()
 
@@ -34,5 +34,14 @@ def test_is_weekday_is_monday_to_friday(df):
 
 
 def test_calendar_values_fit_their_cards(df):
-    for col in (Time.HOUR, Time.DOW, Time.IS_WEEKDAY):
+    for col in (Time.HOUR, Time.DOW, Time.IS_WEEKDAY, Time.SEASON):
         assert df[col].between(0, TIME_CARDS[col] - 1).all()
+
+
+def test_season_is_meteorological(df):
+    assert set(df[Time.SEASON].unique()) == {0, 1, 2, 3}
+    month = df.index.month
+    assert (df.loc[month.isin([12, 1, 2]), Time.SEASON] == 0).all()
+    assert (df.loc[month.isin([3, 4, 5]), Time.SEASON] == 1).all()
+    assert (df.loc[month.isin([6, 7, 8]), Time.SEASON] == 2).all()
+    assert (df.loc[month.isin([9, 10, 11]), Time.SEASON] == 3).all()

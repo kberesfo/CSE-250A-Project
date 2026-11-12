@@ -8,10 +8,11 @@ class Time(StrEnum):
     HOUR = "hour"
     IS_WEEKDAY = "is_weekday"
     DOW = "dow"  # 0 = Monday … 6 = Sunday
+    SEASON = "season"  # 0 = Dec–Feb, 1 = Mar–May, 2 = Jun–Aug, 3 = Sep–Nov
 
 
 # fixed cardinalities: these never depend on n_bins
-TIME_CARDS = {Time.HOUR: 24, Time.IS_WEEKDAY: 2, Time.DOW: 7}
+TIME_CARDS = {Time.HOUR: 24, Time.IS_WEEKDAY: 2, Time.DOW: 7, Time.SEASON: 4}
 
 
 class Gas(StrEnum):
