@@ -42,14 +42,24 @@ CSE-250A-Project/
 ├── .github/                  # issue/PR templates, CI
 ├── configs/                  # experiment configs (later)
 ├── data/                     # committed datasets
-├── figures/                  # generated plots for the report
-├── notebooks/                # exploration + figures only
-├── results/                  # run outputs (gitignored)
+├── docs/                     # decisions.md and other write-ups
+├── figures/                  # generated plots for the report, mirrors notebooks/
+├── notebooks/
+│   ├── phase1/ … phase3b/    # eval.ipynb: one network, evaluated ([Exp] issues)
+│   ├── studies/              # evidence for design decisions (cited in docs/decisions.md)
+│   ├── eda/                  # exploration
+│   └── dev/                  # explainers and usage examples
+├── results/                  # generated reports and tables, mirrors notebooks/ (rebuilt with `make`)
 ├── scripts/                  # one-off utilities
 ├── src/cse250a/              # all reusable code
 │   ├── cli.py                # experiment runner (`uv run cse250a`)
 │   └── modules/
-│       └── config/           # pydantic-settings config
+│       ├── config/           # pydantic-settings config: paths, experiment settings
+│       ├── core/             # column vocabulary, Network, CPTs, messages, results
+│       ├── data/             # loading, discretizing, blocked splits
+│       ├── eval/             # metrics, correlation, concentration, latent-state checks
+│       └── models/           # Model base class, baselines, DiscreteBN, LayeredBN
+├── Makefile                  # clean notebook runs → results/
 ├── pyproject.toml
 └── uv.lock
 ```
@@ -109,9 +119,29 @@ from cse250a.modules.config import config
 ```
 `autoreload` picks up edits to `src/` without restarting the kernel.
 
-- Name notebooks with a number prefix: `01_explore.ipynb`, `02_em_baseline.ipynb`.
-- Outputs are stripped automatically on commit by `nbstripout`, so diffs stay readable. Save figures you need to `figures/`.
+- **Where a notebook goes:** a network run is `notebooks/<phase>/eval.ipynb`; evidence for a design decision goes in `notebooks/studies/`; exploration in `eda/`; explainers and examples in `dev/`. Inside `eda/` and `dev/`, use a number prefix: `01_explore.ipynb`.
+- Outputs are stripped automatically on commit by `nbstripout`, so diffs stay readable. Save figures to `figures/<group>/` and tables to `results/<group>/`, where `<group>` is the notebook's folder.
 - Progress bars: `from tqdm.auto import tqdm`.
+
+### Clean runs and viewing results
+
+The `Makefile` runs each phase and study notebook on a fresh kernel and saves it as HTML in `results/<group>/<name>.html`. A report is rebuilt only when its notebook or something in `src/` has changed.
+
+```bash
+make              # every phase and study notebook
+make phase3b      # one folder (phase1, phase3b, studies, ...)
+make -j3          # run notebooks in parallel
+make list         # show the reports that would be built
+make clean        # delete the generated HTML
+```
+
+To browse the reports, serve `results/`:
+
+```bash
+uv run python -m http.server 8000 --directory results
+```
+
+VS Code forwards port 8000. Click **Open in Browser** on the popup, or go to `http://localhost:8000`, and click through to a report. Stop the server with `Ctrl+C`. The reports are self-contained, so you can also download one and open it locally.
 
 ---
 
