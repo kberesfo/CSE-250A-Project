@@ -1,5 +1,6 @@
 \section{Reflections and Contributions}
 \label{sec:reflections}
+% ~0.75 page. Each member writes their own entry (2--3 sentences total).
 
 % Rubric (Reflection & Iteration): "Clear, specific statements of each
 % member's contribution and personal takeaways. Strong reflection on
@@ -14,16 +15,39 @@
 %   gh pr list --state merged --json number,title,body
 
 \subsection*{Advice for Future Students}
+% ~3--4 bullets, each a lesson from this project, not generic advice:
+% - Check whether a "ground truth" column is itself derived from a sensor
+%   (C6H6 was a transform of S2) before building on it.
+% - Split by blocks of time, not random hours; neighbouring hours leak.
+% - With a latent variable, judge K by restart stability, not likelihood alone.
+% - Scope the reach goal early (the HMM); the core model took longer than planned.
+% - Fix the variable vocabulary and model interface first; it made every
+%   later phase a few lines of notebook.
 \todo{Advice.}
 
+
 \subsection*{Contributions and Reflections}
-\begin{description}
-  \item[Kiernan Beresford] \todo{Contribution.} \todo{Reflection.}
-  \item[{Agnes \todo{last name}}] \todo{Contribution.} \todo{Reflection.}
-  \item[Zachary Brown] \todo{Contribution.} \todo{Reflection.}
-  \item[Muska Mesdaq] \todo{Contribution.} \todo{Reflection.}
-  \item[Joyce Yang] \todo{Contribution.} \todo{Reflection.}
-\end{description}
+
+\subsubsection*{Kiernan Beresford}
+\input{sections/contributions/beresford}
+
+\subsubsection*{Agnes Tang}
+\input{sections/contributions/tang}
+
+\subsubsection*{Zachary Brown}
+\input{sections/contributions/brown}
+
+\subsubsection*{Muska Mesdaq}
+\input{sections/contributions/mesdaq}
+
+\subsubsection*{Joyce Yang}
+\input{sections/contributions/yang}
 
 \subsection*{Use of Generative AI}
-\todo{How Gen AI tools were used.}
+% ~3--4 sentences. Which tools; what for (code review, tests, explainer
+% notebooks, drafting/editing text); what was NOT delegated (design decisions,
+% running and checking experiments); how outputs were verified (tests, reruns,
+% review in PRs). Pull per-PR notes with the gh command above.
+
+Claude Opus 5.5 was used for code reivew, generate unit tests, editing markdown
+reviewer, and outliner. It was \emph{not} used for design decisions or running experiments.

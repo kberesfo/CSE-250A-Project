@@ -1,36 +1,19 @@
 \section{Data Sourcing and Processing}
 \label{sec:data}
-
-% Rubric (Problem & Dataset): "Dataset described with sources, limits, and relevance."
-% Guidelines:
-%   - Where the data comes from.
-%   - Preprocessing (missing data, discretization, feature selection) and WHY
-%     each step matters for the problem.
+% ~1 page. Start from the proposal's Dataset section.
 %
-% Outline:
-% - Source and description \citep{vito2008airquality, devito2008calibration}:
-%   size, time span, variables (table of variables used).
-% - Missing data: -200 encoding; missingness per variable (table or figure);
-%   how handled (EM vs. drop) and why.
-% - Discretization: bin scheme (quantile / domain thresholds), number of bins,
-%   sensitivity checked in Sec. 4.
-% - Feature selection: which sensors / pollutants kept (e.g., drop NMHC) and why.
-% - Train / test split: time-based (no shuffling of hourly data) and why.
-% - Limitations: one device, one site, one year; sensor drift.
-
-\todo{Data source, preprocessing steps, and justification.}
-
-% Example table:
-% \begin{table}[t]
-%   \centering
-%   \caption{Variables used.}
-%   \label{tab:variables}
-%   \begin{tabular}{lll}
-%     \toprule
-%     Variable & Type & Role in model \\
-%     \midrule
-%     CO(GT) & reference analyzer & partially observed \\
-%     PT08.S1 & tin-oxide sensor & observed \\
-%     \bottomrule
-%   \end{tabular}
-% \end{table}
+% - Source: UCI Air Quality \citep{vito2008airquality, devito2008calibration};
+%   9,357 hours, Mar 2004--Feb 2005, one roadside device.
+% - Variables table: kept / dropped / role (input, partially observed, observed).
+% - Missing data: -200 -> NaN; fraction missing per column (CO 18%,
+%   NOx/NO2 17.5%, NMHC 90%); reference gaps handled by EM, hours with missing
+%   weather dropped (366) because inputs have no CPT.
+% - Feature selection (cite App. cross-sensitivity study):
+%     NMHC dropped (90% missing); C6H6 dropped (deterministic function of S2);
+%     S2 dropped (no remaining gas parent); W = T + RH.
+% - Discretization: quantile bins fit on train; K = 3 default; bin count
+%   compared in Sec. 4 (3 vs 7).
+% - CHANGED from proposal: split is blocked by week (weeks shuffled into
+%   train/val/test), not one time cut; val for every choice, test once.
+%   Say why: neighbouring hours are near-duplicates.
+% - Limitations: one device, one site, one year; drift not modeled.

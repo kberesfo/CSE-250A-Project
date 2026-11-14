@@ -1,8 +1,30 @@
 \section{Conclusion}
 \label{sec:conclusion}
+% ~0.5 page. No new results here; every claim points back to Sec. 4.
 
 % Guidelines:
-%   - Summarize key findings and model performance (answer Q1, Q2 from Sec. 1).
+%   - Summarize key findings and model performance (answer Q1--Q3 from Sec. 1).
 %   - Limitations; potential extensions or improvements.
+%
+% Outline:
+% - Findings, one or two sentences per research question:
+%     Q1 Estimation: Phase 1 beats hour-of-day (acc 0.828 vs 0.591, MAE near
+%        the 3-bin floor); \todo{final per-gas result from the best phase}.
+%     Q2 Cross-sensitivity: S1, S3 explained by nominal gas alone; S4 responds
+%        more to CO than NO2; S5 acts as a general traffic sensor (CO + NOx);
+%        \todo{whether cross edges improved estimates}.
+%     Q3 Latent regime: K_R = 3 explains gas co-movement (within-regime corr
+%        ~0.05 vs ~0.54 within hour) and adds +0.39 nats/h over Phase 2;
+%        \todo{effect on accuracy / MAE}.
+% - Limitations (one line each):
+%     sensors assumed independent given parents -> overconfident posteriors;
+%     hours independent (no temporal model); stationary CPTs (drift ignored);
+%     one device, one site, one year; C6H6 reference is a transform of S2;
+%     decisions made at 3 bins; MAR assumed for reference gaps.
+% - Future work (one or two sentences):
+%     temporal model: regime as a Markov chain P(R_t | R_{t-1}), learned with
+%     Baum--Welch \citep{rabiner1989hmm} (planned, not completed);
+%     sensor--sensor or shared-interferent nodes to fix double counting;
+%     time-varying CPTs or a drift term.
 
 \todo{Findings, limitations, future work.}
