@@ -7802,7 +7802,7 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Phase-3b:-a-latent-traffic-regime,-Event-%E2%86%90-hour,-weekday-(Issue-%2319)">Phase 3b: a latent traffic regime, Event ← hour, weekday (Issue #19)<a class="anchor-link" href="#Phase-3b:-a-latent-traffic-regime,-Event-%E2%86%90-hour,-weekday-(Issue-%2319)">¶</a></h1><p><strong>Question.</strong> Does a hidden regime ("Event") explain why the gases rise and fall together, and do its learned states line up with recognisable traffic patterns, such as weekday rush hours?</p>
+<h1 id="Phase-3b:-a-latent-traffic-regime,-Event-%E2%86%90-hour,-weekday">Phase 3b: a latent traffic regime, Event ← hour, weekday<a class="anchor-link" href="#Phase-3b:-a-latent-traffic-regime,-Event-%E2%86%90-hour,-weekday">¶</a></h1><p><strong>Question.</strong> Does a hidden regime ("Event") explain why the gases rise and fall together, and do its learned states line up with recognisable traffic patterns, such as weekday rush hours?</p>
 <p><strong>Network</strong> (Figure 3b, without the AQ node):</p>
 <pre><code>hour, weekday (or day of week)  →  Event (latent, K states)
 Event (+ hour, in the ablation) →  CO, NOx, NO2
@@ -7820,7 +7820,7 @@ W = T + RH  →  every sensor
 </ul>
 <p><strong>What this notebook covers</strong></p>
 <ol>
-<li>Setup, with the sensor edges from #16</li>
+<li>Setup, with the sensor edges from offical network</li>
 <li>A vectorized BN for the grid (LayeredBN)</li>
 <li>The grid: K ∈ {2, 3, 4} × {Event-only, Event + hour} × {is_weekday, dow} × 5 EM restarts × 3 split seeds</li>
 <li>Choosing K: validation log-likelihood, vs Phase 2, and stability across restarts</li>
