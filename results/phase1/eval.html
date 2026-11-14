@@ -7795,7 +7795,36 @@ a.anchor-link {
 </style>
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<main><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0">
+<main>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=474a89d3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h1 id="Phase-1:-CO-from-sensors,-hour-and-weather">Phase 1: CO from sensors, hour and weather<a class="anchor-link" href="#Phase-1:-CO-from-sensors,-hour-and-weather">¶</a></h1><p><strong>Question.</strong> Can a discrete Bayesian network estimate the true CO level better than the hour of day alone, using only what a deployed low-cost device can observe?</p>
+<p><strong>Query.</strong> P(CO | hour, T, RH, S1 … S5). Hour and weather are root inputs. CO is the hidden quantity of interest: it is missing on about 18% of hours, and EM fills those in during fitting. Each sensor depends on CO and the weather.</p>
+<pre><code>    hour ──► CO ──► S1 … S5 ◄── T, RH</code></pre>
+<p><strong>Setup.</strong></p>
+<ul>
+<li>Data: UCI Air Quality, rows with missing hour or weather dropped (8,991 hours left).</li>
+<li>Split: whole weeks shuffled into train / val / test (<code>blocked_split</code>, seed from <code>config</code>).</li>
+<li>Discretization: 3 quantile bins (low / medium / high), edges fit on train only.</li>
+<li>Model: <code>DiscreteBN</code> fit with MAP-EM (Laplace α = 1).</li>
+<li>Baseline: <code>HourOnlyBaseline</code>, P(CO | hour).</li>
+<li>All comparisons are scored on <strong>val</strong>. Test is held out for the final report.</li>
+</ul>
+<p><strong>Results (val, n = 2,064 hours with a reference reading).</strong></p>
+<ul>
+<li>Accuracy 0.828 vs 0.591 for the hour-only baseline (+23.7 pp). Mean log-likelihood −0.662 vs −0.854.</li>
+<li>As a concentration estimate (the posterior-weighted mean over bins), MAE is 0.556 mg/m³. The resolution floor for 3 bins is 0.526 mg/m³, so most of the remaining error comes from the coarse bins rather than the model.</li>
+</ul>
+<p><strong>Run.</strong> <code>make phase1</code> → <code>results/phase1/eval.html</code></p>
+<h2 id="1.-Load">1. Load<a class="anchor-link" href="#1.-Load">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>

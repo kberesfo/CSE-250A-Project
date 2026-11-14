@@ -7881,8 +7881,8 @@ W = T + RH  →  every sensor
 <span class="n">PHASE</span> <span class="o">=</span> <span class="s2">"phase3b"</span>
 <span class="n">RESULTS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">results_dir</span>
 <span class="n">FIGS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figures_dir</span> <span class="o">/</span> <span class="n">PHASE</span>
-<span class="n">GRID_CSV</span> <span class="o">=</span> <span class="n">RESULTS</span> <span class="o">/</span> <span class="n">PHASE</span> <span class="o">/</span> <span class="s2">"phase3b_grid.csv"</span>
-<span class="n">STAB_CSV</span> <span class="o">=</span> <span class="n">RESULTS</span> <span class="o">/</span> <span class="n">PHASE</span> <span class="o">/</span> <span class="s2">"phase3b_stability.csv"</span>
+<span class="n">GRID_CSV</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"phase3b_grid.csv"</span><span class="p">)</span>
+<span class="n">STAB_CSV</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"phase3b_stability.csv"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">RESULTS</span><span class="p">,</span> <span class="n">FIGS</span><span class="p">):</span>
     <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     
@@ -8534,7 +8534,7 @@ W = T + RH  →  every sensor
 <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">"lower right"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">"Model selection: mean ± std over split seeds 0–2 (higher is better)"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"model_selection.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"model_selection.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -8900,7 +8900,7 @@ W = T + RH  →  every sensor
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"EM objective, K = 3 Event-only (seed 0): monotone, restarts end together"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"em_convergence.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"em_convergence.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -9140,7 +9140,7 @@ W = T + RH  →  every sensor
 <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">"P(Event | hour, weekday): learned prior, mean of split seeds 0–2"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"p_event_given_hour_weekday.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"p_event_given_hour_weekday.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span>
 <span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -9201,7 +9201,7 @@ W = T + RH  →  every sensor
     <span class="s2">"Posterior over Event on validation, averaged by hour (evidence: hour, day, weather, sensors)"</span>
 <span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"posterior_by_hour.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"posterior_by_hour.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -9461,7 +9461,7 @@ share of hours (val posterior): {'quiet (night / weekend)': 0.283, 'moderate (da
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"b1_check.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"b1_check.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -9543,7 +9543,7 @@ share of hours (val posterior): {'quiet (night / weekend)': 0.283, 'moderate (da
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">FIGS</span><span class="p">,</span> <span class="s2">"k4_states_by_month.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"k4_states_by_month.png"</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">"tight"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -10065,15 +10065,21 @@ hour (2259, 3) [1.]
 val seed 0 phase2: done
 val seed 0 hour: done
 val seed 1 event: done
+val seed 1 phase2: done
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>val seed 1 phase2: done
-val seed 1 hour: done
-val seed 2 event: done
+<pre>val seed 1 hour: done
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>val seed 2 event: done
 val seed 2 phase2: done
 val seed 2 hour: done
 </pre>
@@ -11069,13 +11075,7 @@ test seed 1 event: done
 test seed 1 phase2: done
 test seed 1 hour: done
 test seed 2 event: done
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>test seed 2 phase2: done
+test seed 2 phase2: done
 test seed 2 hour: done
 </pre>
 </div>
