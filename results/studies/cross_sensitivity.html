@@ -7856,11 +7856,7 @@ a.anchor-link {
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial_spearman</span><span class="p">,</span> <span class="n">spearman_matrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteBN</span>
 
-<span class="n">STUDY</span>   <span class="o">=</span> <span class="s2">"cross_sensitivity"</span>
-<span class="n">RESULTS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="s2">"studies"</span> <span class="o">/</span> <span class="n">STUDY</span>   <span class="c1"># CSVs, next to the Makefile's studies/cross_sensitivity.html</span>
-<span class="n">FIGS</span>    <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figures_dir</span> <span class="o">/</span> <span class="s2">"studies"</span> <span class="o">/</span> <span class="n">STUDY</span>
-<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">RESULTS</span><span class="p">,</span> <span class="n">FIGS</span><span class="p">):</span>
-    <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">STUDY</span> <span class="o">=</span> <span class="s2">"studies/cross_sensitivity"</span>
 
 <span class="n">SEEDS</span>  <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>

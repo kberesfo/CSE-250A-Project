@@ -159,6 +159,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Results
+results/**/*.csv
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -231,7 +234,7 @@ __marimo__/
 *.out
 *.synctex.gz
 *.toc
-docs/paper/**/*.pdf
+
 
 # --- OS clutter (mixed Windows/Mac team) ---
 .DS_Store
