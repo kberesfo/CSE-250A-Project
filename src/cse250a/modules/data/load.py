@@ -20,5 +20,8 @@ def load_air_quality(path: str | Path) -> pd.DataFrame:
         raise ValueError("duplicate timestamps in the air quality data")
 
     df["hour"] = df.index.hour  # 0–23, used by Hour → gas
+    df["dow"] = df.index.dayofweek                           # 0 = Monday … 6 = Sunday
+    df["is_weekday"] = (df.index.dayofweek < 5).astype(int)   # 1 = weekday, 0 = weekend
+    df["season"] = df.index.month % 12 // 3                  # 0 = Dec–Feb … 3 = Sep–Nov
 
     return df
