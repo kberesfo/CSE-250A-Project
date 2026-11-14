@@ -40,6 +40,44 @@ def spearman_matrix(
     )
 
 
+def weighted_corr(x: np.ndarray, y: np.ndarray, w: np.ndarray) -> float:
+    """Pearson correlation of x and y with row weights w."""
+    mx, my = np.average(x, weights=w), np.average(y, weights=w)
+    dx, dy = x - mx, y - my
+    return float(np.sum(w * dx * dy) / np.sqrt(np.sum(w * dx**2) * np.sum(w * dy**2)))
+
+
+def within_group_spearman(df: pd.DataFrame, x: str, y: str, group: str) -> float:
+    """Spearman ρ of x and y inside each group (e.g. each hour), averaged over groups.
+
+    Groups where either column is constant are skipped. Rows missing x or y are
+    dropped first.
+    """
+    d = df[[x, y, group]].dropna()
+    vals = []
+    for _, g in d.groupby(group):
+        if len(g) > 2 and g[x].nunique() > 1 and g[y].nunique() > 1:
+            vals.append(g[x].rank().corr(g[y].rank()))
+    return float(np.mean(vals)) if vals else float("nan")
+
+
+def within_state_spearman(
+    df: pd.DataFrame, x: str, y: str, posterior: np.ndarray
+) -> float:
+    """Rank correlation of x and y inside each latent state, soft-assigned.
+
+    `posterior` is (len(df), K): P(state | row). Each state's correlation is a
+    posterior-weighted Pearson correlation of the ranks; the states are then
+    averaged, weighted by their total posterior mass. Use rows where x and y
+    are both observed.
+    """
+    rx, ry = df[x].rank().to_numpy(), df[y].rank().to_numpy()
+    per_state = [
+        weighted_corr(rx, ry, posterior[:, k]) for k in range(posterior.shape[1])
+    ]
+    return float(np.average(per_state, weights=posterior.sum(axis=0)))
+
+
 def partial_spearman(
     df: pd.DataFrame,
     x: str,
