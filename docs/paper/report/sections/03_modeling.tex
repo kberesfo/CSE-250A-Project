@@ -1,35 +1,115 @@
 \section{Modeling and Inference}
 \label{sec:modeling}
-
-% Rubric (Methodology): "Method fully specified and justified. Enough detail
-% for replication."
-% Guidelines:
-%   - Specify the probabilistic model.
-%   - Assumptions, parameters, dependency structure; relate to the data/problem.
-%   - Inference / learning algorithms implemented.
-%
-% Outline:
+% ~1.75 pages. One figure (network), one equation per subsection.
 \subsection{Bayesian Network}
 \label{sec:bn}
-% - Structure figure (nodes, edges); justify each edge.
-% - Conditional independence assumptions and what they mean physically.
-% - Parameters: CPTs; count of free parameters.
-\todo{BN structure, assumptions, parameterization.}
+
+\paragraph{Variables.} Each hour $t$ is described by the hour of day
+$H \in \{0,\dots,23\}$, a weekday indicator $D \in \{0,1\}$, the weather
+$W = (T, \mathit{RH})$, the reference gases
+$G = (G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$ and the sensors
+$S = (S_1, S_3, S_4, S_5)$. Every continuous variable is discretized into $K$
+quantile bins fit on the training split (Sec.~\ref{sec:data}); $K = 3$ unless
+stated. The gases are partially observed in training and always hidden at
+prediction time; $H$, $D$ and $W$ are always observed.
+
+\paragraph{Structure.} The network (\cref{fig:network}) factorizes as
+\begin{equation}
+  P(G, S \mid H, W) = \prod_{j} P(G_j \mid H)
+  \prod_{i} P\bigl(S_i \mid \mathrm{Pa}_G(S_i), T, \mathit{RH}\bigr),
+  \label{eq:factorization}
+\end{equation}
+where $\mathrm{Pa}_G(S_i)$ are the gases sensor $i$ responds to. The inputs have
+no CPTs; we only condition on them. Each edge type has a physical reason:
+hour $\to$ gas captures the daily traffic cycle; gas $\to$ sensor links each
+sensor to its nominal target \citep{devito2008calibration} ($S_1$: CO, $S_3$:
+NO$_x$, $S_4$: NO$_2$); and weather $\to$ sensor reflects the metal-oxide
+sensors' dependence on temperature and humidity. $S_5$'s nominal target, O$_3$,
+has no reference, so its gas parents come from data alone. The
+cross-sensitivity edges (CO, NO$_x$ $\to S_4$ and $S_5$) were added by forward
+selection only if they raised held-out log-likelihood and kept a partial
+correlation with the sensor in all three split seeds (\cref{app:cross}). NMHC
+(90\% missing), C$_6$H$_6$ (an almost exact function of $S_2$) and $S_2$
+itself are excluded. Earlier phases are subgraphs of this one
+(\cref{app:networks}).
+
+\paragraph{Assumptions.} \Cref{eq:factorization} assumes that the gases are
+independent given the hour, that each sensor is independent of the others
+given its parents, and that hours are independent with one set of CPTs for the
+whole year. The first is the strongest, since all three gases come from
+traffic; \cref{sec:latent} relaxes it. The second means a signal shared by
+several sensors is counted once per sensor, making the posterior
+overconfident (\cref{sec:results}). The third ignores autocorrelation and
+sensor drift.
+
+\paragraph{Parameters.} A node with $K_X$ states and parent configurations
+$\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$ the network has
+900, and $S_4$, with five parents, accounts for 486 of them.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.6\linewidth]{phase-3b}
+  \caption{Final network. Solid edges: nominal sensor targets; dashed: 
+  cross-sensitivities selected from data; $R$ is the latent emission regime
+  (\cref{sec:latent}). The diamond is air quality, derived from the estimated
+  concentrations rather than modeled.}
+  \label{fig:network}
+\end{figure}
+
+
+\subsection{Latent Emission Regime}
+% - R <- hour, weekday; gases <- R. Unobserved on every row.
+% - Purpose: make gases conditionally independent (check: within-R corr ~ 0).
+% - K_R chosen by val log-lik + restart stability.
+\todo{muska}
 
 \subsection{Learning with Missing Data (EM)}
 \label{sec:em}
-% - E-step / M-step for this model \citep{dempster1977em}; initialization,
-%   restarts, convergence criterion.
-\todo{EM derivation / description for our model.}
+
+\paragraph{What is missing.} Hour is always recorded. The sensors and weather
+go missing together, during whole-device outages on 3.9\% of hours; we drop
+those 366 hours (8,991 remain), which leaves the sensors fully observed and the
+inputs complete, since inputs have no CPT and cannot be inferred. The reference gases are
+missing far more often: CO on 18.0\% of hours and NO$_x$ and NO$_2$ on 17.5\%.
+These gaps are concentrated at night, peaking at 54\% of CO readings at 4\,AM
+and 93\% of NO$_2$ readings at 3\,AM, consistent with a scheduled analyzer
+calibration. Because the missingness depends on the hour, which the model
+conditions on, rather than on the concentration itself, we treat the gaps as
+missing at random \citep{dempster1977em}. The latent regime $R$ has no column
+and is missing on every hour.
+
+\paragraph{EM.} Rather than imputing missing values, EM averages over them. In
+the E-step, each training hour contributes expected counts
+$\hat N(x,u) = \sum_t P(X{=}x, U{=}u \mid e_t; \theta)$ to every family
+$(X, U)$: an indicator where the family is observed, and the current posterior
+over the missing values where it is not. The M-step re-estimates each CPT row
+from these counts with Laplace smoothing ($\alpha = 1$):
+\begin{equation}
+  \theta_{x \mid u} = \frac{\hat N(x,u) + \alpha}{\sum_{x'} \hat N(x',u) + K_X \alpha}.
+\end{equation}
+This is MAP estimation under a Dirichlet prior, so EM is guaranteed never to
+decrease the objective $\mathcal{L}$, the log-likelihood plus log-prior.
+
+\paragraph{Initialization and convergence.} CPTs of nodes with data start from
+smoothed counts on the hours where their family is fully observed; the latent
+regime $R$ starts from random tables drawn with a fixed seed. EM stops when an
+iteration improves $\mathcal{L}$ by less than a relative tolerance,
+$\mathcal{L}^{(s)} - \mathcal{L}^{(s-1)} < \epsilon\,\lvert \mathcal{L}^{(s-1)} \rvert$
+with $\epsilon = 10^{-4}$, or after 100 iterations. We record $\mathcal{L}$ at
+every iteration and check that it never decreases beyond round-off; a decrease
+would indicate an implementation error. Phase~1 converges in 3 iterations
+because CO is observed on 82\% of hours.
+
+\paragraph{Stability of the latent regime.} With $R$ fully hidden, the
+objective has several local optima, and the same regimes can come out in a
+different order on each run (label switching). We run several restarts, match
+states across runs by their gas profiles (Hungarian matching), and accept a
+number of regimes $K_R$ only if the matched states agree across restarts. That
+way the regimes mean the same thing every time we fit and can be interpreted
+(\cref{sec:results}).
 
 \subsection{Inference}
-\label{sec:inference}
-% - Queries we answer, e.g. P(true level | sensors, weather).
-% - Algorithm (exact: variable elimination); complexity.
-\todo{Inference queries and algorithm.}
-
-\subsection{Temporal Extension: HMM}
-\label{sec:hmm}
-% - Hidden state, emissions, transition assumptions \citep{rabiner1989hmm}.
-% - Baum--Welch for learning; forward--backward / Viterbi for inference.
-\todo{HMM model and algorithms (if pursued).}
+% - Query P(G_j | hour, weekday, W, sensors); reference never evidence.
+% - Exact by enumeration over hidden joint (K_R * K^3 states); cost linear in N.
+% - Concentration estimate = sum_k P(bin k | e) c_bar_k; resolution floor.
+\todo{yang \& muska}
