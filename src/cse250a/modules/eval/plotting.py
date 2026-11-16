@@ -70,4 +70,4 @@ def plot_mae_bars(mae_baseline, mae_model, mae_floor, *,
 
 
 # Units per the UCI Air Quality dataset documentation
-UNITS = {"CO": "mg/m$^3$", "NOx": "ppb", "NO2": "Âµg/m$^3$"}
+UNITS = {"CO": "mg/m$^3$", "NOx": "ppb", "NO2": r"$\mu$g/m$^3$"}
