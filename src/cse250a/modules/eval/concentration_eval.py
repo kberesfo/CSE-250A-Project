@@ -13,12 +13,14 @@ from cse250a.modules.eval.concentration import (
 from cse250a.modules.eval.plotting import UNITS, plot_concentration_trace, plot_mae_bars
 from cse250a.modules.eval.skill import skill_table
 
+WEEK = slice("2004-05-10", "2004-05-16") #To-do: confirm this is a good week for all phases
+
 
 def _ms(s):
     return f"{s.mean():.3f} ± {s.std():.3f}"
 
 
-def concentration_section(*, gases, grid, est_val, val_raw, c_bar, edges, week,
+def concentration_section(*, gases, grid, est_val, val_raw, c_bar, edges, week = WEEK,
                           phase_label, n_bins, fig_path):
     """
     gases   : gas keys (e.g. Gas.CO)
