@@ -61,7 +61,33 @@ $\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$ the network has
 % - R <- hour, weekday; gases <- R. Unobserved on every row.
 % - Purpose: make gases conditionally independent (check: within-R corr ~ 0).
 % - K_R chosen by val log-lik + restart stability.
-\todo{muska}
+\label{sec:latent}
+\Cref{eq:factorization} treats the three gases as independent given the hour,
+but they share one source: traffic. Within a single hour of day the mean
+gas--gas rank correlation is still 0.54 (0.66 overall), so the hour alone
+does not explain why the gases rise and fall together. We therefore add a
+latent emission regime $R \in \{1,\dots,K_R\}$ between the time inputs and the
+gases, and replace $P(G_j \mid H)$ with
+\begin{equation}
+  P(G \mid H, D) = \sum_{r=1}^{K_R} P(R{=}r \mid H, D)
+  \prod_{j} P(G_j \mid R{=}r).
+  \label{eq:latent}
+\end{equation}
+$R$ has no column and is hidden on every hour, so its CPTs are learned only
+through EM (\cref{sec:em}). The weekday indicator $D$ is a parent of $R$ only,
+so it costs $(K_R-1)\cdot 48$ parameters rather than one table per gas.
+
+If $R$ captures the shared cause, the gases should be nearly independent
+within a regime. We test this directly: we soft-assign each hour to the
+regimes by $P(R \mid e_t)$ and compute the gas--gas rank correlation within
+each regime, weighted by the posterior.
+
+We chose $K_R \in \{2,3,4\}$ by mean validation log-likelihood per hour over
+three blocked split seeds, and kept a value only if it was reproducible across
+five restarts (\cref{sec:em}). We selected $K_R = 3$ with $R \leftarrow (H, D)$:
+it has 870 free parameters against 900 for the network without $R$. A direct
+$H \to G_j$ edge in addition to $R$ did not give a reproducible solution, so
+the gases depend on time only through $R$.
 
 \subsection{Learning with Missing Data (EM)}
 \label{sec:em}
@@ -112,4 +138,20 @@ way the regimes mean the same thing every time we fit and can be interpreted
 % - Query P(G_j | hour, weekday, W, sensors); reference never evidence.
 % - Exact by enumeration over hidden joint (K_R * K^3 states); cost linear in N.
 % - Concentration estimate = sum_k P(bin k | e) c_bar_k; resolution floor.
-\todo{yang \& muska}
+% Muska: the latent-regime case. Joyce: add or merge your part here.
+At prediction time the evidence is $e_t = (H, D, W, S)$; the reference gases
+are never evidence. With the latent regime the hidden variables of an hour are
+$(R, G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$, only
+$K_R K^3 = 81$ joint states at $K = 3$, so we compute every posterior exactly
+by enumeration:
+\begin{equation}
+  P(G_j \mid e_t) \propto \sum_{r} \sum_{g_{-j}}
+  P(r \mid H, D) \prod_{i} P(g_i \mid r)
+  \prod_{s} P\bigl(s \mid \mathrm{Pa}_G(s), T, \mathit{RH}\bigr).
+\end{equation}
+The cost is linear in the number of hours, and the same sums give the
+E-step's expected counts. The concentration estimate is the posterior mean
+over bins, $\hat c_j = \sum_k P(G_j{=}k \mid e_t)\,\bar c_{j,k}$, where
+$\bar c_{j,k}$ is the training mean of bin $k$. Because $\hat c_j$ can only
+mix the $K$ bin means, its error has a floor even with a perfect posterior;
+we report that resolution floor with every MAE (\cref{sec:results}).
