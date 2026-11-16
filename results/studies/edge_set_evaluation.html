@@ -12194,7 +12194,7 @@ S4 distributions as CO bin varies (other parents fixed at middle bins):
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=47">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=47">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -12206,35 +12206,7 @@ S4 distributions as CO bin varies (other parents fixed at middle bins):
 <span class="k">for</span> <span class="n">gas</span> <span class="ow">in</span> <span class="n">GASES</span><span class="p">:</span>
     <span class="n">selected_estimates</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">gas</span><span class="p">)]</span> <span class="o">=</span> <span class="n">chosen_preds</span><span class="p">[</span><span class="s1">'BN'</span><span class="p">][</span><span class="n">gas</span><span class="p">][</span><span class="s1">'estimate'</span><span class="p">]</span>
 <span class="n">selected_estimates</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">RESULT_DIR</span><span class="o">/</span><span class="s1">'phase2_validation_estimates_selected.csv'</span><span class="p">,</span><span class="n">index_label</span><span class="o">=</span><span class="s1">'datetime'</span><span class="p">)</span>
-
-<span class="n">WRITE_DECISION</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Change to True only after team review.</span>
-<span class="n">edge_text</span><span class="o">=</span><span class="s1">'nominal-only'</span> <span class="k">if</span> <span class="n">CHOSEN_EDGES</span><span class="o">==</span><span class="s1">'nominal-only'</span> <span class="k">else</span> <span class="s1">'nominal + cross'</span>
-<span class="n">decision_line</span><span class="o">=</span><span class="p">(</span>
-    <span class="sa">f</span><span class="s1">'- 2026-11-10 — Phase 2 multi-gas recovery evaluation — selected </span><span class="si">{</span><span class="n">edge_text</span><span class="si">}</span><span class="s1"> edges '</span>
-    <span class="sa">f</span><span class="s1">'and </span><span class="si">{</span><span class="n">CHOSEN_BINS</span><span class="si">}</span><span class="s1"> bins (representative seed </span><span class="si">{</span><span class="n">CHOSEN_SEED</span><span class="si">}</span><span class="s1">) using validation '</span>
-    <span class="sa">f</span><span class="s1">'normalized concentration gap above the resolution floor. NMHC remains excluded '</span>
-    <span class="sa">f</span><span class="s1">'from the primary graph due to approximately 90% missing reference readings; '</span>
-    <span class="sa">f</span><span class="s1">'EM/complete-case, sensor ablation, conditional gas dependence, and chronological '</span>
-    <span class="sa">f</span><span class="s1">'drift diagnostics are reported in notebooks/experiments/phase2_eval.ipynb.'</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">decision_line</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">WRITE_DECISION</span><span class="p">:</span>
-    <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="s1">'docs/decisions.md'</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">'a'</span><span class="p">,</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">+</span><span class="n">decision_line</span><span class="o">+</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>- 2026-11-10 — Phase 2 multi-gas recovery evaluation — selected nominal + cross edges and 3 bins (representative seed 1) using validation normalized concentration gap above the resolution floor. NMHC remains excluded from the primary graph due to approximately 90% missing reference readings; EM/complete-case, sensor ablation, conditional gas dependence, and chronological drift diagnostics are reported in notebooks/experiments/phase2_eval.ipynb.
-</pre>
 </div>
 </div>
 </div>
