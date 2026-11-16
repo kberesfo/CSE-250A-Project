@@ -32,14 +32,25 @@ EVIDENCE = (H, T, S1, S4)
 # Hand-picked CPTs. Axes are (*parents, node), so TABLES[S1][co, t] is the
 # distribution of S1 given CO = co and T = t.
 TABLES = {
-    CO: np.array([[0.8, 0.2],   # hour 0 (night): CO mostly low
-                  [0.3, 0.7]]),  # hour 1 (day):   CO mostly high
-    NO2: np.array([[0.7, 0.3],
-                   [0.4, 0.6]]),
-    S1: np.array([[[0.9, 0.1], [0.7, 0.3]],    # CO low,  T = 0 / 1
-                  [[0.2, 0.8], [0.1, 0.9]]]),  # CO high, T = 0 / 1
-    S4: np.array([[[0.9, 0.1], [0.4, 0.6]],    # NO2 low,  CO low / high
-                  [[0.3, 0.7], [0.1, 0.9]]]),  # NO2 high, CO low / high
+    CO: np.array(
+        [
+            [0.8, 0.2],  # hour 0 (night): CO mostly low
+            [0.3, 0.7],
+        ]
+    ),  # hour 1 (day):   CO mostly high
+    NO2: np.array([[0.7, 0.3], [0.4, 0.6]]),
+    S1: np.array(
+        [
+            [[0.9, 0.1], [0.7, 0.3]],  # CO low,  T = 0 / 1
+            [[0.2, 0.8], [0.1, 0.9]],
+        ]
+    ),  # CO high, T = 0 / 1
+    S4: np.array(
+        [
+            [[0.9, 0.1], [0.4, 0.6]],  # NO2 low,  CO low / high
+            [[0.3, 0.7], [0.1, 0.9]],
+        ]
+    ),  # NO2 high, CO low / high
 }
 
 nan = np.nan
@@ -47,14 +58,14 @@ nan = np.nan
 DATA = pd.DataFrame(
     [
         # H  T   CO   NO2   S1   S4
-        [1, 0, 1, 1, 1, 1],          # 0  complete
-        [0, 1, 0, 0, 0, 0],          # 1  complete
-        [1, 1, nan, 0, 1, 1],        # 2  CO missing
-        [0, 0, 1, nan, 1, 0],        # 3  NO2 missing
-        [1, 0, nan, nan, 1, 1],      # 4  both references missing (= a prediction)
-        [0, 0, 0, 1, nan, 1],        # 5  a sensor missing
-        [1, 1, 1, 0, 1, nan],        # 6  the other sensor missing
-        [0, 1, nan, nan, nan, 0],    # 7  three missing
+        [1, 0, 1, 1, 1, 1],  # 0  complete
+        [0, 1, 0, 0, 0, 0],  # 1  complete
+        [1, 1, nan, 0, 1, 1],  # 2  CO missing
+        [0, 0, 1, nan, 1, 0],  # 3  NO2 missing
+        [1, 0, nan, nan, 1, 1],  # 4  both references missing (= a prediction)
+        [0, 0, 0, 1, nan, 1],  # 5  a sensor missing
+        [1, 1, 1, 0, 1, nan],  # 6  the other sensor missing
+        [0, 1, nan, nan, nan, 0],  # 7  three missing
     ],
     columns=[H, T, CO, NO2, S1, S4],
     dtype=float,
@@ -101,5 +112,9 @@ def same(name: str, mine, theirs, atol: float = 1e-12) -> None:
         return
     mine, theirs = np.asarray(mine, dtype=float), np.asarray(theirs, dtype=float)
     ok = mine.shape == theirs.shape and np.allclose(mine, theirs, atol=atol)
-    detail = "" if ok else f"\n   mine:   {mine.round(6).tolist()}\n   theirs: {theirs.round(6).tolist()}"
+    detail = (
+        ""
+        if ok
+        else f"\n   mine:   {mine.round(6).tolist()}\n   theirs: {theirs.round(6).tolist()}"
+    )
     print(f"{'✅' if ok else '❌'} {name}{detail}")

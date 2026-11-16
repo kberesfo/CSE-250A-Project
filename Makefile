@@ -1,11 +1,14 @@
 # Clean runs of the notebooks → outputs saved in the notebook + HTML reports in results/.
 #
-#   make               run every phase and study notebook on a fresh kernel
-#   make phase3b       just one group (any folder name: phase1, phase3b, studies, ...)
-#   make -j3           run notebooks in parallel (each one is independent)
-#   make keep-outputs  mark every phase/study notebook so nbstripout keeps its outputs
-#   make list          show the reports that would be built
-#   make clean         delete the generated HTML
+#   make                      run every phase and study notebook on a fresh kernel
+#   make phase3b              just one group (any folder name: phase1, phase3b, studies, ...)
+#   make -j3                  run notebooks in parallel (each one is independent)
+#   make rerun                rebuild everything and recompute cached tables (RERUN=true)
+#   make -B phase3b RERUN=true   the same for one group
+#   make keep-outputs         mark every phase/study notebook so nbstripout keeps its outputs
+#   make list                 show the reports that would be built
+#   make clean                delete the generated HTML
+#   make clean-results        delete the generated CSVs in results/ (rebuilt on the next run)
 #
 # Each run writes its outputs back into the notebook (committed, renders on GitHub)
 # and saves results/<group>/<name>.html. A report is rebuilt when its notebook or
@@ -21,7 +24,11 @@ EXECUTE := uv run jupyter nbconvert --to notebook --execute --inplace \
 	       --ExecutePreprocessor.timeout=-1
 TO_HTML := uv run jupyter nbconvert --to html
 
-.PHONY: all clean list keep-outputs $(GROUPS)
+# Notebooks read config.rerun from the RERUN environment variable.
+RERUN ?= false
+export RERUN
+
+.PHONY: all clean clean-results rerun list keep-outputs $(GROUPS)
 
 all: $(REPORTS)
 
@@ -45,3 +52,9 @@ list:
 
 clean:
 	rm -f $(REPORTS)
+
+clean-results:
+	find results -name '*.csv' -delete
+
+rerun:
+	$(MAKE) -B all RERUN=true

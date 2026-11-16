@@ -14,6 +14,9 @@ class Config(BaseSettings):
     )  # SPLIT__TRAIN=0.6, BINS__N_BINS=5
 
     seed: int = 0
+    # Recompute cached result tables even if the CSV exists (RERUN=true).
+    # False: notebooks load a saved table when there is one.
+    rerun: bool = False
     paths: PathSettings = Field(default_factory=PathSettings)
     split: SplitSettings = Field(default_factory=SplitSettings)
     bins: BinSettings = Field(default_factory=BinSettings)

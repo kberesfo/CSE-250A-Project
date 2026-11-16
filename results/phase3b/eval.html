@@ -9811,11 +9811,12 @@ state 3  1.81  1.82  1.86
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="10.-Concentration-Evaluation">10. Concentration Evaluation<a class="anchor-link" href="#10.-Concentration-Evaluation">¶</a></h2><p>For each gas, we have:</p>
 <ol>
-<li>Time-series plot: reference (black) vs. our posterior-mean estimate (green), with the bin ranges shaded and dotted lines at the training bin means. Use the same ~1 week validation window in every notebook so they line up.</li>
-<li>MAE bar chart: resolution floor, that phase's BN, and the hour-only baseline, with values on the bars (like the Phase 1 CO figures I'm attaching).</li>
-<li>Table: MAE/RMSE (mean ± std across seeds) plus skill_vs_baseline and gap_closed, built with skill_table().</li>
+<li>Time-series plot: reference (black) vs. our posterior-mean estimate (green), with the bin ranges shaded and dotted lines at the training bin means.</li>
+<li>MAE bar chart: resolution floor, the phase's BN, and the hour-only baseline, with values on the bars</li>
+<li>Table: MAE/RMSE (mean ± std across seeds) plus skill_vs_baseline and gap_closed</li>
 </ol>
 <p>The trace plots show seed 0 on one validation week. The MAE bars and the table are means over the three split seeds.</p>
+<p>This section is made so that we can easily compare phases.</p>
 </div>
 </div>
 </div>
@@ -10161,7 +10162,6 @@ NO2(GT) edges match Discretizer: 1.0
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="s2">"phase3b"</span>
 <span class="n">out</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">grid</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out</span> <span class="o">/</span> <span class="s2">"concentration_grid.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="n">grid_all</span> <span class="o">=</span> <span class="n">pg_val</span><span class="p">[</span><span class="n">pg_val</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"event"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"floor"</span><span class="p">])]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">grid_all</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid_all</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
@@ -10180,7 +10180,16 @@ NO2(GT) edges match Discretizer: 1.0
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Summary-Report">Summary Report<a class="anchor-link" href="#Summary-Report">¶</a></h3><h4 id="Interpretations">Interpretations<a class="anchor-link" href="#Interpretations">¶</a></h4><h4 id="Limitations">Limitations<a class="anchor-link" href="#Limitations">¶</a></h4>
+<h3 id="Summary-Report">Summary Report<a class="anchor-link" href="#Summary-Report">¶</a></h3><h4 id="Interpretations">Interpretations<a class="anchor-link" href="#Interpretations">¶</a></h4><ul>
+<li>Phase 3b's BN removes about 37% of the hour only baseline's MAE for CO (0.367 ± 0.064), about 16% for NO2 (0.160 ± 0.078), and about 34% for NOx (0.338 ± 0.034)</li>
+<li>The BN closes about 80% of the gap between the baseline and the resolution floor for CO (0.798 ± 0.014), and about 77% for NOx (0.772 ± 0.166), so there is little room for improvement in the model for these gases with 3 bins, but for NO2 the gap is closed by about 33% (0.334 ± 0.138), so there is much more room for improvement.</li>
+<li>There is no clear difference between phase 3b (Emission Regime) and phase 2 BNs for CO and NOx where the gaps are smaller than the stds (CO: 0.003 ± 0.030, NOx: 0.016 ± 0.052). For NO2, phase 3b does seem to do a little better (0.137 ± 0.082), but not that much, so it is not firm evidence.</li>
+</ul>
+<h4 id="Limitations">Limitations<a class="anchor-link" href="#Limitations">¶</a></h4><ul>
+<li>Only 3 bins are used, which means the resolution is low, and using more bins would help with that, but it would make it so we have less evidence per bin, so we kept the 3 bins</li>
+<li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a “high” posterior overshoots. More bins narrow the top bin; season-aware bin means would address the seasonal part and are future work.</li>
+<li>The trace plots show seed 0 on one validation week. The MAE bars and the table are means over the three split seeds.</li>
+</ul>
 </div>
 </div>
 </div>
@@ -10191,7 +10200,7 @@ NO2(GT) edges match Discretizer: 1.0
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><em>AI use: code started with help from Claude, edited, reviewed and run by me. Also asked for help with buggy code.</em></p>
+<p><em>AI use: code started and debugged with help from Claude, edited, reviewed and run by me.</em></p>
 </div>
 </div>
 </div>
