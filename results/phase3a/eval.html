@@ -7964,7 +7964,7 @@ The Phase 2 edges are:</p>
     <span class="p">})</span>
     <span class="k">return</span> <span class="n">Network</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="n">structure</span><span class="p">,</span> <span class="n">cards</span><span class="o">=</span><span class="n">cards</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
-<span class="c1"># Quick data-availability check for the four reference gases.</span>
+<span class="c1"># Quick data-availability check for the three reference gases.</span>
 <span class="n">availability</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
     <span class="s2">"observed"</span><span class="p">:</span> <span class="n">raw</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">GASES</span><span class="p">)]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
     <span class="s2">"missing"</span><span class="p">:</span> <span class="n">raw</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">GASES</span><span class="p">)]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
@@ -8116,8 +8116,8 @@ For each bin count and split seed:</p>
 <ol>
 <li>Make a blocked train/validation/test split</li>
 <li>Fit the discretizer on <strong>train only</strong> using the three gases, four sensors, and T/RH.</li>
-<li>Fit the specified Bayesian netowrk and the hour-only baseline.</li>
-<li>Estimate each gas concentration as posterior bin probabilites multipled by training bin means.</li>
+<li>Fit the specified Bayesian network and the hour-only baseline.</li>
+<li>Estimate each gas concentration as posterior bin probabilities multiplied by training bin means.</li>
 <li>Score concentration MAE/RMSE and the perfect-bin resolution floor.</li>
 </ol>
 </div>
