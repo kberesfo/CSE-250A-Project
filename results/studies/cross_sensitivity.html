@@ -7854,11 +7854,11 @@ a.anchor-link {
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">TIME_CARDS</span><span class="p">,</span> <span class="n">Gas</span><span class="p">,</span> <span class="n">Network</span><span class="p">,</span> <span class="n">Sensor</span><span class="p">,</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Weather</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Discretizer</span><span class="p">,</span> <span class="n">blocked_split</span><span class="p">,</span> <span class="n">load_air_quality</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial_spearman</span><span class="p">,</span> <span class="n">spearman_matrix</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteBN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayeredBN</span>
 
 <span class="n">STUDY</span> <span class="o">=</span> <span class="s2">"studies/cross_sensitivity"</span>
 
-<span class="n">SEEDS</span>  <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">SEEDS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8418,7 +8418,7 @@ a.anchor-link {
     <span class="n">net</span> <span class="o">=</span> <span class="n">Network</span><span class="p">(</span><span class="n">structure</span><span class="o">=</span><span class="p">{</span><span class="n">sensor</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parents</span><span class="p">)},</span> <span class="n">cards</span><span class="o">=</span><span class="n">cards</span><span class="p">)</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span>
         <span class="n">train</span><span class="o">.</span><span class="n">columns</span>
     <span class="p">)</span>
-    <span class="n">bn</span> <span class="o">=</span> <span class="n">DiscreteBN</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+    <span class="n">bn</span> <span class="o">=</span> <span class="n">LayeredBN</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">bn</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
 
 
@@ -8532,20 +8532,8 @@ a.anchor-link {
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>S2 (NMHC) -&gt; ['C6H6']
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>S3 (NOx)  -&gt; ['NOx']
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>S4 (NO2)  -&gt; ['NO2', 'CO', 'NOx']
+S3 (NOx)  -&gt; ['NOx']
+S4 (NO2)  -&gt; ['NO2', 'CO', 'NOx']
 </pre>
 </div>
 </div>

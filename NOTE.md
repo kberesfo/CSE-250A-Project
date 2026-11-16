@@ -14,3 +14,12 @@ uv run ruff check --select I --fix notebooks/   # sort imports
 uv run ruff format notebooks/                   # format every code cell
 uv run ruff check notebooks/                    # check what's left
 ```
+
+```bash
+uv run python -m http.server 8000 --directory results
+```
+
+```bash
+make clean clean-results   # delete all HTML, the index and all CSVs
+make rerun                 # rerun every notebook in order, recomputing cached tables
+```

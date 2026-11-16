@@ -7876,17 +7876,24 @@ W = T + RH  →  every sensor
     <span class="n">within_state_spearman</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">state_order</span> <span class="k">as</span> <span class="n">_state_order</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models.layered</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayeredBN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval.concentration_eval</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WEEK</span><span class="p">,</span>
+    <span class="n">build_cache</span><span class="p">,</span>
+    <span class="n">concentration_section</span><span class="p">,</span>
+    <span class="n">per_gas_table</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval.skill</span><span class="w"> </span><span class="kn">import</span> <span class="n">skill_table</span><span class="p">,</span> <span class="n">skill_vs_baseline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HourOnlyBaseline</span><span class="p">,</span> <span class="n">LayeredBN</span>
 
 <span class="n">PHASE</span> <span class="o">=</span> <span class="s2">"phase3b"</span>
 <span class="n">GRID_CSV</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"phase3b_grid.csv"</span><span class="p">)</span>
 <span class="n">STAB_CSV</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"phase3b_stability.csv"</span><span class="p">)</span>
-    
-<span class="n">RERUN_GRID</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="kc">False</span>  <span class="c1"># True re-fits all 180 + 3 models (~15–30 min); False loads the saved CSVs</span>
-<span class="p">)</span>
+
+<span class="n">RERUN_GRID</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">rerun</span>
 
 <span class="n">SPLIT_SEEDS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">BIN_COUNTS</span> <span class="o">=</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">n_bins</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 3 and 5, as in Phase 1, 2 and 3a</span>
+<span class="n">REP_BINS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">n_bins</span>  <span class="c1"># sections 1–9 and the figures use 3 bins</span>
 <span class="n">RESTART_SEEDS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">KS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="n">EVENT</span> <span class="o">=</span> <span class="n">Latent</span><span class="o">.</span><span class="n">EMISSION_REGIME</span>  <span class="c1"># the latent "Event" node</span>
@@ -7920,19 +7927,22 @@ W = T + RH  →  every sensor
 <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dropped </span><span class="si">{</span><span class="n">before</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows with missing hour/weather; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2"> left"</span><span class="p">)</span>
 
-<span class="n">splits</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">SPLIT_SEEDS</span><span class="p">:</span>
-    <span class="n">train_raw</span><span class="p">,</span> <span class="n">val_raw</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blocked_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>  <span class="c1"># test is not touched here</span>
-    <span class="n">disc</span> <span class="o">=</span> <span class="n">Discretizer</span><span class="p">(</span><span class="n">n_bins</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">n_bins</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-        <span class="n">train_raw</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">SENSORS</span><span class="p">,</span> <span class="o">*</span><span class="n">GASES</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">splits</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_split</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n_bins</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Blocked split for one seed, bin edges fit on train only. Test is not touched here."""</span>
+    <span class="n">train_raw</span><span class="p">,</span> <span class="n">val_raw</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blocked_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">disc</span> <span class="o">=</span> <span class="n">Discretizer</span><span class="p">(</span><span class="n">n_bins</span><span class="o">=</span><span class="n">n_bins</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_raw</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">SENSORS</span><span class="p">,</span> <span class="o">*</span><span class="n">GASES</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"train_raw"</span><span class="p">:</span> <span class="n">train_raw</span><span class="p">,</span>
         <span class="s2">"val_raw"</span><span class="p">:</span> <span class="n">val_raw</span><span class="p">,</span>
         <span class="s2">"train"</span><span class="p">:</span> <span class="n">disc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">train_raw</span><span class="p">),</span>
         <span class="s2">"val"</span><span class="p">:</span> <span class="n">disc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">val_raw</span><span class="p">),</span>
         <span class="s2">"cards"</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">disc</span><span class="o">.</span><span class="n">cards</span><span class="p">,</span> <span class="o">**</span><span class="n">TIME_CARDS</span><span class="p">},</span>
+        <span class="s2">"disc"</span><span class="p">:</span> <span class="n">disc</span><span class="p">,</span>
     <span class="p">}</span>
+
+
+<span class="n">splits</span> <span class="o">=</span> <span class="p">{</span><span class="n">seed</span><span class="p">:</span> <span class="n">make_split</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">REP_BINS</span><span class="p">)</span> <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">SPLIT_SEEDS</span><span class="p">}</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
     <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="s2">"train"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]),</span> <span class="s2">"val"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">"val"</span><span class="p">])}</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">splits</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 <span class="p">)</span><span class="o">.</span><span class="n">rename_axis</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -8210,7 +8220,253 @@ W = T + RH  →  every sensor
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>183 fits | all EM runs monotone: True | converged: 100% | iterations: median 20, max 57
+<pre>seed 0  K=2  event       is_weekday  done (3s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event       dow         done (5s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event+hour  is_weekday  done (9s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event+hour  dow         done (13s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event       is_weekday  done (17s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event       dow         done (20s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event+hour  is_weekday  done (26s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event+hour  dow         done (31s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event       is_weekday  done (39s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event       dow         done (46s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event+hour  is_weekday  done (52s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event+hour  dow         done (57s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event       is_weekday  done (59s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event       dow         done (62s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event+hour  is_weekday  done (66s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event+hour  dow         done (70s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event       is_weekday  done (73s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event       dow         done (77s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event+hour  is_weekday  done (82s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event+hour  dow         done (87s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event       is_weekday  done (93s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event       dow         done (99s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event+hour  is_weekday  done (105s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event+hour  dow         done (110s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event       is_weekday  done (113s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event       dow         done (116s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event+hour  is_weekday  done (119s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event+hour  dow         done (123s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event       is_weekday  done (126s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event       dow         done (130s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event+hour  is_weekday  done (135s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event+hour  dow         done (140s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event       is_weekday  done (146s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event       dow         done (152s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event+hour  is_weekday  done (159s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event+hour  dow         done (165s)
+183 fits | all EM runs monotone: True | converged: 100% | iterations: median 20, max 57
 </pre>
 </div>
 </div>
@@ -9820,7 +10076,7 @@ state 3  1.81  1.82  1.86
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=41">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=42">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -9828,41 +10084,45 @@ state 3  1.81  1.82  1.86
 <div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval.concentration_eval</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">WEEK</span><span class="p">,</span>
-    <span class="n">build_cache</span><span class="p">,</span>
-    <span class="n">concentration_section</span><span class="p">,</span>
-    <span class="n">per_gas_table</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HourOnlyBaseline</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">evidence</span> <span class="o">=</span> <span class="p">(</span><span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span> <span class="n">Time</span><span class="o">.</span><span class="n">IS_WEEKDAY</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">,</span> <span class="o">*</span><span class="n">SENSORS</span><span class="p">)</span>
 
-<span class="n">evidence</span> <span class="o">=</span> <span class="p">(</span><span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span> <span class="n">Time</span><span class="o">.</span><span class="n">IS_WEEKDAY</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">,</span> <span class="o">*</span><span class="n">SENSORS</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=42">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># models[seed] = {"event": ..., "phase2": ..., "hour": ...}</span>
-<span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">SPLIT_SEEDS</span><span class="p">:</span>
-    <span class="n">sp</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span>
-    <span class="n">models</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"event"</span><span class="p">:</span> <span class="n">chosen</span><span class="p">[</span><span class="n">seed</span><span class="p">],</span>
-        <span class="s2">"phase2"</span><span class="p">:</span> <span class="n">LayeredBN</span><span class="p">(</span>
-            <span class="n">phase2_network</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"cards"</span><span class="p">]),</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]),</span>
-        <span class="s2">"hour"</span><span class="p">:</span> <span class="n">HourOnlyBaseline</span><span class="p">(</span><span class="n">cards</span><span class="o">=</span><span class="n">sp</span><span class="p">[</span><span class="s2">"cards"</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-            <span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span>
-        <span class="p">),</span>
-    <span class="p">}</span>
-<span class="nb">print</span><span class="p">({</span><span class="n">s</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_event</span><span class="p">(</span><span class="n">sp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Chosen configuration on one split: the best of RESTART_SEEDS by train objective."""</span>
+    <span class="n">net</span> <span class="o">=</span> <span class="n">event_network</span><span class="p">(</span><span class="n">CHOSEN</span><span class="p">[</span><span class="s2">"K"</span><span class="p">],</span> <span class="n">CHOSEN</span><span class="p">[</span><span class="s2">"parents"</span><span class="p">],</span> <span class="n">CHOSEN</span><span class="p">[</span><span class="s2">"day"</span><span class="p">],</span> <span class="n">sp</span><span class="p">[</span><span class="s2">"cards"</span><span class="p">])</span>
+    <span class="n">fits</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">LayeredBN</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">RESTART_SEEDS</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">fits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">final</span><span class="p">)</span>
+
+
+<span class="n">splits_by_bins</span><span class="p">,</span> <span class="n">caches</span><span class="p">,</span> <span class="n">tables</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BIN_COUNTS</span><span class="p">:</span>
+    <span class="n">sps</span> <span class="o">=</span> <span class="n">splits</span> <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="n">REP_BINS</span> <span class="k">else</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="n">make_split</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">SPLIT_SEEDS</span><span class="p">}</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">seed</span><span class="p">,</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">sps</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">models</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"event"</span><span class="p">:</span> <span class="n">chosen</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="n">REP_BINS</span> <span class="k">else</span> <span class="n">fit_event</span><span class="p">(</span><span class="n">sp</span><span class="p">),</span>
+            <span class="s2">"phase3a"</span><span class="p">:</span> <span class="n">LayeredBN</span><span class="p">(</span>
+                <span class="n">phase2_network</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"cards"</span><span class="p">]),</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">200</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]),</span>
+            <span class="s2">"hour"</span><span class="p">:</span> <span class="n">HourOnlyBaseline</span><span class="p">(</span><span class="n">cards</span><span class="o">=</span><span class="n">sp</span><span class="p">[</span><span class="s2">"cards"</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                <span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"bins=</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> seed=</span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">build_cache</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">sps</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">GASES</span><span class="p">)</span>
+    <span class="n">splits_by_bins</span><span class="p">[</span><span class="n">b</span><span class="p">],</span> <span class="n">caches</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">sps</span><span class="p">,</span> <span class="n">cache</span>
+    <span class="n">tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">per_gas_table</span><span class="p">(</span>
+            <span class="n">cache</span><span class="p">,</span> <span class="n">sps</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="n">GASES</span><span class="p">,</span> <span class="n">model_names</span><span class="o">=</span><span class="p">(</span><span class="s2">"event"</span><span class="p">,</span> <span class="s2">"phase3a"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">bins</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+    <span class="p">)</span>
+
+<span class="n">pg_val</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">cache_val</span> <span class="o">=</span> <span class="n">caches</span><span class="p">[</span><span class="n">REP_BINS</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -9875,23 +10135,43 @@ state 3  1.81  1.82  1.86
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{0: ['event', 'phase2', 'hour'], 1: ['event', 'phase2', 'hour'], 2: ['event', 'phase2', 'hour']}
+<pre>bins=3 seed=0: 0s
 </pre>
 </div>
 </div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>bins=3 seed=1: 0s
+</pre>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=43">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>bins=3 seed=2: 0s
+</pre>
 </div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">cache_val</span> <span class="o">=</span> <span class="n">build_cache</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">splits</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="n">evidence</span><span class="p">,</span> <span class="n">GASES</span><span class="p">)</span>
-<span class="n">pg_val</span> <span class="o">=</span> <span class="n">per_gas_table</span><span class="p">(</span><span class="n">cache_val</span><span class="p">,</span> <span class="n">splits</span><span class="p">,</span> <span class="s2">"val"</span><span class="p">,</span> <span class="n">GASES</span><span class="p">)</span>
-</pre></div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>bins=5 seed=0: 16s
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>bins=5 seed=1: 16s
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>bins=5 seed=2: 14s
+</pre>
 </div>
 </div>
 </div>
@@ -9901,69 +10181,12 @@ state 3  1.81  1.82  1.86
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">sp</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"val_raw"</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_period</span><span class="p">(</span><span class="s2">"W"</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>datetime
-2004-03-08/2004-03-14    102
-2004-03-15/2004-03-21     66
-2004-05-03/2004-05-09    102
-2004-05-10/2004-05-16    168
-2004-05-17/2004-05-23     66
-2004-08-30/2004-09-05    102
-2004-09-06/2004-09-12     48
-2004-10-04/2004-10-10    102
-2004-10-11/2004-10-17     66
-2004-10-18/2004-10-24    102
-2004-10-25/2004-10-31     66
-2004-11-29/2004-12-05    102
-2004-12-06/2004-12-12     66
-2004-12-13/2004-12-19     52
-2004-12-20/2004-12-26     66
-2005-01-03/2005-01-09    102
-2005-01-10/2005-01-16    168
-2005-01-17/2005-01-23     66
-2005-01-31/2005-02-06    102
-2005-02-07/2005-02-13     41
-2005-02-21/2005-02-27    102
-2005-02-28/2005-03-06    168
-2005-03-07/2005-03-13     66
-2005-03-21/2005-03-27    102
-2005-03-28/2005-04-03     66
-Freq: W-SUN, Name: count, dtype: int64
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=45">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"hours in week:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"val_raw"</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">WEEK</span><span class="p">]))</span>   <span class="c1"># should be about 168</span>
-
-<span class="n">edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">sp</span><span class="p">[</span><span class="s2">"train_raw"</span><span class="p">][</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">quantile</span><span class="p">([</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">GASES</span><span class="p">}</span>
-<span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">GASES</span><span class="p">:</span>
-    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"train_raw"</span><span class="p">][</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">(),</span> <span class="n">edges</span><span class="p">[</span><span class="n">g</span><span class="p">])</span> <span class="o">==</span> <span class="n">sp</span><span class="p">[</span><span class="s2">"train"</span><span class="p">][</span><span class="n">g</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"edges match Discretizer:"</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"hours in week:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"val_raw"</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">WEEK</span><span class="p">]))</span>  <span class="c1"># should be about 168</span>
+<span class="n">edges</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="s2">"disc"</span><span class="p">]</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">g</span><span class="p">])</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">GASES</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
@@ -9977,9 +10200,6 @@ Freq: W-SUN, Name: count, dtype: int64
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>hours in week: 168
-CO(GT) edges match Discretizer: 1.0
-NOx(GT) edges match Discretizer: 1.0
-NO2(GT) edges match Discretizer: 1.0
 </pre>
 </div>
 </div>
@@ -9990,33 +10210,52 @@ NO2(GT) edges match Discretizer: 1.0
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">PHASE_LABEL</span><span class="p">,</span> <span class="n">N_BINS</span> <span class="o">=</span> <span class="s2">"Phase 3b"</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">n_bins</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">PHASE_LABEL</span><span class="p">,</span> <span class="n">N_BINS</span> <span class="o">=</span> <span class="s2">"Phase 3b"</span><span class="p">,</span> <span class="n">REP_BINS</span>
+<span class="n">LABELS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"event"</span><span class="p">:</span> <span class="s2">"BN"</span><span class="p">,</span>
+    <span class="s2">"phase3a"</span><span class="p">:</span> <span class="s2">"Phase3a"</span><span class="p">,</span>
+    <span class="s2">"hour"</span><span class="p">:</span> <span class="s2">"HourOnlyBaseline"</span><span class="p">,</span>
+    <span class="s2">"floor"</span><span class="p">:</span> <span class="s2">"resolution_floor"</span><span class="p">,</span>
+<span class="p">}</span>
 
-<span class="n">grid</span> <span class="o">=</span> <span class="n">pg_val</span><span class="p">[</span><span class="n">pg_val</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"event"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"floor"</span><span class="p">])]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">grid</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"event"</span><span class="p">:</span> <span class="s2">"BN"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">:</span> <span class="s2">"HourOnlyBaseline"</span><span class="p">,</span> <span class="s2">"floor"</span><span class="p">:</span> <span class="s2">"resolution_floor"</span><span class="p">})</span>
-<span class="n">grid</span><span class="p">[</span><span class="s2">"bins"</span><span class="p">]</span> <span class="o">=</span> <span class="n">N_BINS</span>
-<span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[[</span><span class="s2">"bins"</span><span class="p">,</span> <span class="s2">"seed"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="s2">"MAE"</span><span class="p">,</span> <span class="s2">"RMSE"</span><span class="p">]]</span>
+<span class="c1"># hand-off for the shared concentration evaluation: one row per (bins, seed, gas, model)</span>
+<span class="n">concentration_grid</span> <span class="o">=</span> <span class="n">pg_val</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">pg_val</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">LABELS</span><span class="p">))[</span>
+    <span class="p">[</span><span class="s2">"bins"</span><span class="p">,</span> <span class="s2">"seed"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="s2">"MAE"</span><span class="p">,</span> <span class="s2">"RMSE"</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">concentration_grid</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="s2">"concentration_grid.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
 
+<span class="c1"># shared section at 3 bins (figures use seed 0)</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">concentration_grid</span><span class="p">[</span>
+    <span class="p">(</span><span class="n">concentration_grid</span><span class="p">[</span><span class="s2">"bins"</span><span class="p">]</span> <span class="o">==</span> <span class="n">N_BINS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">concentration_grid</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"Phase3a"</span><span class="p">)</span>
+<span class="p">]</span>
 <span class="n">summary_table</span> <span class="o">=</span> <span class="n">concentration_section</span><span class="p">(</span>
-    <span class="n">gases</span><span class="o">=</span><span class="n">GASES</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span>
+    <span class="n">gases</span><span class="o">=</span><span class="n">GASES</span><span class="p">,</span>
+    <span class="n">grid</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span>
     <span class="n">est_val</span><span class="o">=</span><span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">cache_val</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"event"</span><span class="p">][</span><span class="s2">"est"</span><span class="p">][</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">GASES</span><span class="p">},</span>
-    <span class="n">val_raw</span><span class="o">=</span><span class="n">sp</span><span class="p">[</span><span class="s2">"val_raw"</span><span class="p">],</span> <span class="n">c_bar</span><span class="o">=</span><span class="n">cache_val</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"c_bar"</span><span class="p">],</span> <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">,</span>
-    <span class="n">week</span><span class="o">=</span><span class="n">WEEK</span><span class="p">,</span> <span class="n">phase_label</span><span class="o">=</span><span class="n">PHASE_LABEL</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="n">N_BINS</span><span class="p">,</span>
+    <span class="n">val_raw</span><span class="o">=</span><span class="n">sp</span><span class="p">[</span><span class="s2">"val_raw"</span><span class="p">],</span>
+    <span class="n">c_bar</span><span class="o">=</span><span class="n">cache_val</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"c_bar"</span><span class="p">],</span>
+    <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">,</span>
+    <span class="n">week</span><span class="o">=</span><span class="n">WEEK</span><span class="p">,</span>
+    <span class="n">phase_label</span><span class="o">=</span><span class="n">PHASE_LABEL</span><span class="p">,</span>
+    <span class="n">n_bins</span><span class="o">=</span><span class="n">N_BINS</span><span class="p">,</span>
     <span class="n">fig_path</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
 <span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">cse250a.modules.eval.skill</span><span class="w"> </span><span class="kn">import</span> <span class="n">skill_vs_baseline</span>
+<span class="c1"># how much of Phase 3a's MAE the latent node removes (same split, same bins)</span>
+<span class="n">mae</span> <span class="o">=</span> <span class="n">pg_val</span><span class="p">[</span><span class="n">pg_val</span><span class="p">[</span><span class="s2">"bins"</span><span class="p">]</span> <span class="o">==</span> <span class="n">N_BINS</span><span class="p">]</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span>
+    <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"seed"</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">"MAE"</span>
+<span class="p">)</span>
+<span class="n">vs_3a</span> <span class="o">=</span> <span class="n">mae</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">skill_vs_baseline</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"event"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"phase3a"</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">vs_3a</span> <span class="o">=</span> <span class="n">vs_3a</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"gas"</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">])</span>
 
-<span class="n">mae</span> <span class="o">=</span> <span class="n">pg_val</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"seed"</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">"MAE"</span><span class="p">)</span>
-<span class="n">vs_p2</span> <span class="o">=</span> <span class="n">mae</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">skill_vs_baseline</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"event"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"phase2"</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">vs_p2</span> <span class="o">=</span> <span class="n">vs_p2</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"gas"</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">])</span>
-
-<span class="n">summary_table</span><span class="p">[</span><span class="s2">"vs Phase 2"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">vs_p2</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="s1">'mean'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">vs_p2</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="s1">'std'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">summary_table</span><span class="o">.</span><span class="n">index</span>
+<span class="n">summary_table</span><span class="p">[</span><span class="s2">"vs Phase 3a"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">vs_3a</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="s1">'mean'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">vs_3a</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="s1">'std'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">summary_table</span><span class="o">.</span><span class="n">index</span>
 <span class="p">]</span>
 <span class="n">summary_table</span>
 </pre></div>
@@ -10065,7 +10304,7 @@ NO2(GT) edges match Discretizer: 1.0
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[24]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[21]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -10093,7 +10332,7 @@ NO2(GT) edges match Discretizer: 1.0
 <th>hour RMSE</th>
 <th>skill_vs_baseline</th>
 <th>gap_closed</th>
-<th>vs Phase 2</th>
+<th>vs Phase 3a</th>
 </tr>
 <tr>
 <th>gas</th>
@@ -10152,23 +10391,121 @@ NO2(GT) edges match Discretizer: 1.0
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=47">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3add50f7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">results_dir</span> <span class="o">/</span> <span class="s2">"phase3b"</span>
-<span class="n">out</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">grid_all</span> <span class="o">=</span> <span class="n">pg_val</span><span class="p">[</span><span class="n">pg_val</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"event"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">,</span> <span class="s2">"floor"</span><span class="p">])]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">grid_all</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid_all</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"event"</span><span class="p">:</span> <span class="s2">"BN"</span><span class="p">,</span> <span class="s2">"phase2"</span><span class="p">:</span> <span class="s2">"Phase2"</span><span class="p">,</span> <span class="s2">"hour"</span><span class="p">:</span> <span class="s2">"HourOnlyBaseline"</span><span class="p">,</span> <span class="s2">"floor"</span><span class="p">:</span> <span class="s2">"resolution_floor"</span><span class="p">})</span>
-<span class="n">grid_all</span><span class="p">[</span><span class="s2">"bins"</span><span class="p">]</span> <span class="o">=</span> <span class="n">N_BINS</span>
-<span class="n">grid_all</span><span class="p">[[</span><span class="s2">"bins"</span><span class="p">,</span> <span class="s2">"seed"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="s2">"MAE"</span><span class="p">,</span> <span class="s2">"RMSE"</span><span class="p">]]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out</span> <span class="o">/</span> <span class="s2">"concentration_grid.csv"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 3 vs 5 bins: skill and gap closed per gas (mean ± std over split seeds)</span>
+<span class="n">skill_table</span><span class="p">(</span><span class="n">concentration_grid</span><span class="p">[</span><span class="n">concentration_grid</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"Phase3a"</span><span class="p">])</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">"bins"</span><span class="p">,</span> <span class="s2">"gas"</span><span class="p">]</span>
+<span class="p">)[[</span><span class="s2">"skill_vs_baseline"</span><span class="p">,</span> <span class="s2">"gap_closed"</span><span class="p">]]</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[22]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead tr th {
+        text-align: left;
+    }
+
+    .dataframe thead tr:last-of-type th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th colspan="2" halign="left">skill_vs_baseline</th>
+<th colspan="2" halign="left">gap_closed</th>
+</tr>
+<tr>
+<th></th>
+<th></th>
+<th>mean</th>
+<th>std</th>
+<th>mean</th>
+<th>std</th>
+</tr>
+<tr>
+<th>bins</th>
+<th>gas</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="3" valign="top">3</th>
+<th>CO(GT)</th>
+<td>0.367</td>
+<td>0.064</td>
+<td>0.798</td>
+<td>0.014</td>
+</tr>
+<tr>
+<th>NO2(GT)</th>
+<td>0.160</td>
+<td>0.078</td>
+<td>0.334</td>
+<td>0.138</td>
+</tr>
+<tr>
+<th>NOx(GT)</th>
+<td>0.338</td>
+<td>0.034</td>
+<td>0.772</td>
+<td>0.166</td>
+</tr>
+<tr>
+<th rowspan="3" valign="top">5</th>
+<th>CO(GT)</th>
+<td>0.425</td>
+<td>0.056</td>
+<td>0.684</td>
+<td>0.017</td>
+</tr>
+<tr>
+<th>NO2(GT)</th>
+<td>0.217</td>
+<td>0.086</td>
+<td>0.333</td>
+<td>0.120</td>
+</tr>
+<tr>
+<th>NOx(GT)</th>
+<td>0.446</td>
+<td>0.041</td>
+<td>0.715</td>
+<td>0.061</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
