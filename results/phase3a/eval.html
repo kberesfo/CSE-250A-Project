@@ -9252,7 +9252,6 @@ NO2(GT) edges match Discretizer: 1.0
     <span class="n">fig_path</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">PHASE</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span>
 <span class="p">)</span>
 
-<span class="c1"># how much of Phase 2's MAE the cross edges remove (same splits, same bins)</span>
 <span class="n">phase2_grid</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="s2">"phase2"</span><span class="p">,</span> <span class="s2">"concentration_grid.csv"</span><span class="p">))</span>
 <span class="n">paired</span> <span class="o">=</span> <span class="n">concentration_grid</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
     <span class="n">phase2_grid</span><span class="p">[</span><span class="n">phase2_grid</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"BN"</span><span class="p">],</span>
