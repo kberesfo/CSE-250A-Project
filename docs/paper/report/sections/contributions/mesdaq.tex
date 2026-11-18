@@ -7,9 +7,8 @@ edges (\#16, PR~\#23), and Phase~3b, the latent emission regime (\#19,
 PR~\#24), including a faster exact EM for layered networks and the shared
 restart-stability and within-regime correlation helpers.
 
-\noindent\textbf{Reflection:} \todo{Muska: 1--2 sentences in your own words.
-Facts you can draw on: success = within-regime gas correlation fell to 0.05,
-so the regime explains the shared traffic signal; surprise = with $R$ fully
-hidden, $K_R = 4$ and Event + hour gave different answers on each restart,
-so stability had to become a selection rule; next time = check restart
-stability before running the full grid.}
+\noindent\textbf{Reflection:} One thing I was happy with was seeing how much 
+the latent Event model reduced the correlation between gases, which showed 
+that it was capturing patterns in traffic and emissions that the earlier model missed. 
+I was surprised by how inconsistent some of the results were across different EM restarts, 
+and I learned that checking model stability early on is just as important as improving its performance.
