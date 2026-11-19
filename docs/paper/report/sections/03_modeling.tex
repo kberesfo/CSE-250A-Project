@@ -57,6 +57,7 @@ $\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$,
 
 \subsection{Latent Emission Regime}
 \label{sec:latent}
+\todo{Muska check this section}
 \Cref{eq:factorization} treats the three gases as independent given the hour,
 but they share one source, traffic, and still rise and fall together within a
 given hour (\cref{sec:results}). We therefore add a latent emission regime
@@ -75,9 +76,12 @@ against 144 for the three $P(G_j \mid H)$ tables, so the full network has 870
 rather than 900.
 
 If $R$ captures the shared cause, the gases should be nearly independent within
-a regime. We test this directly: we soft-assign each hour to the regimes by
-$P(R \mid e_t)$ and compute the gas--gas rank correlation within each regime,
-weighted by the posterior.
+a regime. We test this on validation hours where both gases of a pair are
+observed: each hour is soft-assigned to the regimes by its posterior over $R$,
+and we compute the posterior-weighted gas--gas rank correlation within each
+regime. We infer $R$ two ways: from all observed values, and from the sensors
+alone, which is stricter because the posterior cannot use the gas readings
+being tested.
 
 We compared $K_R \in \{2,3,4\}$, with weekday or day of week as the day
 variable, by mean validation log-likelihood per hour over three split seeds,
@@ -89,17 +93,11 @@ reproducible solution, so we keep $R$ as the gases' only parent.
 \subsection{Learning with Missing Data (EM)}
 \label{sec:em}
 
-\paragraph{What is missing.} Hour is always recorded. The sensors and weather
-go missing together, during whole-device outages on 3.9\% of hours; we drop
-those 366 hours (8,991 remain), which leaves the sensors fully observed and the
-inputs complete, since inputs have no CPT and cannot be inferred. The reference gases are
-missing far more often: CO on 18.0\% of hours and NO$_x$ and NO$_2$ on 17.5\%.
-These gaps are concentrated at night, peaking at 54\% of CO readings at 4\,AM
-and 93\% of NO$_2$ readings at 3\,AM, consistent with a scheduled analyzer
-calibration. Because the missingness depends on the hour, which the model
-conditions on, rather than on the concentration itself, we treat the gaps as
-missing at random \citep{dempster1977em}. The latent regime $R$ has no column
-and is missing on every hour.
+\paragraph{What is hidden.} During training the reference gases are missing on
+17--18\% of hours (\cref{sec:data}), and the latent regime $R$ is missing on
+every hour. Because the reference gaps depend on the hour, which the model
+conditions on, rather than on the concentration itself, we treat them as
+missing at random.
 
 \paragraph{EM.} Rather than imputing missing values, EM averages over them. In
 the E-step, each training hour contributes expected counts
@@ -126,29 +124,27 @@ because CO is observed on 82\% of hours.
 \paragraph{Stability of the latent regime.} With $R$ fully hidden, the
 objective has several local optima, and the same regimes can come out in a
 different order on each run (label switching). We run several restarts, match
-states across runs by their gas profiles (Hungarian matching), and accept a
+states across runs by their gas profiles, and accept a
 number of regimes $K_R$ only if the matched states agree across restarts. That
 way the regimes mean the same thing every time we fit and can be interpreted
 (\cref{sec:results}).
 
 \subsection{Inference}
-% - Query P(G_j | hour, weekday, W, sensors); reference never evidence.
-% - Exact by enumeration over hidden joint (K_R * K^3 states); cost linear in N.
-% - Concentration estimate = sum_k P(bin k | e) c_bar_k; resolution floor.
-% Muska: the latent-regime case. Joyce: add or merge your part here.
+\label{sec:inference}
 At prediction time the evidence is $e_t = (H, D, W, S)$; the reference gases
 are never evidence. With the latent regime the hidden variables of an hour are
 $(R, G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$, only
-$K_R K^3 = 81$ joint states at $K = 3$, so we compute every posterior exactly
-by enumeration:
+$K_R K^3 = 81$ joint states at $K = K_R = 3$, so we compute every posterior
+exactly by enumeration:
 \begin{equation}
   P(G_j \mid e_t) \propto \sum_{r} \sum_{g_{-j}}
-  P(r \mid H, D) \prod_{i} P(g_i \mid r)
+  P(r \mid H, D) \prod_{k} P(g_k \mid r)
   \prod_{s} P\bigl(s \mid \mathrm{Pa}_G(s), T, \mathit{RH}\bigr).
 \end{equation}
-The cost is linear in the number of hours, and the same sums give the
-E-step's expected counts. The concentration estimate is the posterior mean
-over bins, $\hat c_j = \sum_k P(G_j{=}k \mid e_t)\,\bar c_{j,k}$, where
-$\bar c_{j,k}$ is the training mean of bin $k$. Because $\hat c_j$ can only
-mix the $K$ bin means, its error has a floor even with a perfect posterior;
-we report that resolution floor with every MAE (\cref{sec:results}).
+Without the regime, the sum over $r$ is replaced by $\prod_k P(g_k \mid H)$.
+The cost is linear in the number of hours, and the same sums give the E-step's
+expected counts. The concentration estimate is the posterior mean over bins,
+$\hat c_{j,t} = \sum_b P(G_j{=}b \mid e_t)\,\bar c_{j,b}$, where $\bar c_{j,b}$
+is the training mean of bin $b$. Because $\hat c_{j,t}$ can only mix the $K$
+bin means, its error has a floor even with a perfect posterior; we report that
+resolution floor with every MAE (\cref{sec:results}).

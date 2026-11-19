@@ -69,6 +69,27 @@ hour~$\to$~gas with the latent emission regime (\cref{sec:latent}).
   \label{fig:net-variants}
 \end{figure}
 
+\section{Missing Data}
+\label{app:missing}
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{muska/missingness}
+    \caption{Share of hours missing, per column.}
+    \label{fig:missing-col}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{muska/missing_by_hour}
+    \caption{Reference gaps by hour of day.}
+    \label{fig:missing-hour}
+  \end{subfigure}
+  \caption{Missing data. Sensors and weather go missing together (device
+  outages); the reference gases are missing far more often, mostly at night.}
+  \label{fig:missing}
+\end{figure}
 
 \section{Cross-Sensitivity Study}
 \label{app:cross}
