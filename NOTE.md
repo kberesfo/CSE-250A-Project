@@ -23,3 +23,4 @@ uv run python -m http.server 8000 --directory results
 make clean clean-results   # delete all HTML, the index and all CSVs
 make rerun                 # rerun every notebook in order, recomputing cached tables
 ```
+
