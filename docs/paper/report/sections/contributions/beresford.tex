@@ -7,4 +7,12 @@ data pipeline and shared \texttt{src/} model library used by every phase
 Phase~1 with Joyce Yang (\#14, \#22, \#25), and coordinated the project's
 overall direction.
 
-\noindent\textbf{Reflection:} \todo{write reflection}
+\noindent\textbf{Reflection:} Each phase taught us something about the data
+that the previous model's assumptions had hidden. The clearest example was
+Phase~3b: the latent regime fit the joint distribution much better than
+Phase~2, yet barely changed per-gas accuracy, which showed me that a better
+likelihood does not always mean better predictions. Several of our
+independence assumptions turned out to be only approximately true, but they
+kept the model small enough to learn and still gave useful estimates. With
+more time, I would model the strong hour-to-hour dependence in the data with
+an HMM and compare it directly against Phase~3b.

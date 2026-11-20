@@ -17,3 +17,15 @@
 %   train/val/test), not one time cut; val for every choice, test once.
 %   Say why: neighbouring hours are near-duplicates.
 % - Limitations: one device, one site, one year; drift not modeled.
+
+\paragraph{What is missing.}\todo{-200 -> NaN; } Hour is always recorded. The sensors and weather
+go missing together, during whole-device outages on 3.9\% of hours; we drop
+those 366 hours (8,991 remain), which leaves the sensors fully observed and the
+inputs complete, since inputs have no CPT and cannot be inferred. The reference
+gases are missing far more often (\cref{fig:missing}): CO on 18.0\% of hours and
+NO$_x$ and NO$_2$ on 17.5\%. These gaps are concentrated at night, peaking at
+54\% of CO readings at 4\,AM and 93\% of NO$_2$ readings at 3\,AM, consistent
+with a scheduled analyzer calibration. Because the missingness depends on the
+hour, which the model conditions on, rather than on the concentration itself,
+we treat the gaps as missing at random \citep{dempster1977em}. The latent
+regime $R$ has no column and is missing on every hour.

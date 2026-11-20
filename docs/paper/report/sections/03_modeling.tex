@@ -5,104 +5,99 @@
 \label{sec:bn}
 
 \paragraph{Variables.} Each hour $t$ is described by the hour of day
-$H \in \{0,\dots,23\}$, a weekday indicator $D \in \{0,1\}$, the weather
-$W = (T, \mathit{RH})$, the reference gases
-$G = (G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$ and the sensors
-$S = (S_1, S_3, S_4, S_5)$. Every continuous variable is discretized into $K$
-quantile bins fit on the training split (Sec.~\ref{sec:data}); $K = 3$ unless
-stated. The gases are partially observed in training and always hidden at
-prediction time; $H$, $D$ and $W$ are always observed.
+$H \in \{0,\dots,23\}$, a weekday indicator $D \in \{0,1\}$ (used only by the
+latent regime, \cref{sec:latent}), the weather $W = (T, \mathit{RH})$, the
+reference gases $G = (G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$
+and the sensors $S = (S_1, S_3, S_4, S_5)$. Every continuous variable is
+discretized into $K$ quantile bins fit on the training split (\cref{sec:data});
+$K = 3$ unless stated. The gases are partially observed in training and always
+hidden at prediction time; $H$, $D$ and $W$ are always observed.
 
-\paragraph{Structure.} The network (\cref{fig:network}) factorizes as
+\paragraph{Structure.} Without the latent regime, the network factorizes as
 \begin{equation}
   P(G, S \mid H, W) = \prod_{j} P(G_j \mid H)
   \prod_{i} P\bigl(S_i \mid \mathrm{Pa}_G(S_i), T, \mathit{RH}\bigr),
   \label{eq:factorization}
 \end{equation}
 where $\mathrm{Pa}_G(S_i)$ are the gases sensor $i$ responds to. The inputs have
-no CPTs; we only condition on them. Each edge type has a physical reason:
-hour $\to$ gas captures the daily traffic cycle; gas $\to$ sensor links each
-sensor to its nominal target \citep{devito2008calibration} ($S_1$: CO, $S_3$:
-NO$_x$, $S_4$: NO$_2$); and weather $\to$ sensor reflects the metal-oxide
-sensors' dependence on temperature and humidity. $S_5$'s nominal target, O$_3$,
-has no reference, so its gas parents come from data alone. The
-cross-sensitivity edges (CO, NO$_x$ $\to S_4$ and $S_5$) were added by forward
-selection only if they raised held-out log-likelihood and kept a partial
-correlation with the sensor in all three split seeds (\cref{app:cross}). NMHC
-(90\% missing), C$_6$H$_6$ (an almost exact function of $S_2$) and $S_2$
-itself are excluded. Earlier phases are subgraphs of this one
+no CPTs; we only condition on them. Hour $\to$ gas captures the daily traffic
+cycle; gas $\to$ sensor links each sensor to its nominal target
+\citep{devito2008calibration} ($S_1$: CO, $S_3$: NO$_x$, $S_4$: NO$_2$); and
+weather $\to$ sensor reflects the metal-oxide sensors' dependence on
+temperature and humidity. A cross-sensitivity study (\cref{app:cross}) added
+CO and NO$_x$ as parents of $S_4$, beyond its nominal NO$_2$, and of $S_5$,
+whose nominal target O$_3$ has no reference. NMHC (90\% missing), C$_6$H$_6$
+(an almost exact function of $S_2$) and $S_2$ itself are excluded. Phase~1 is
+the single-gas case of \cref{eq:factorization}, with CO as the only gas
 (\cref{app:networks}).
 
 \paragraph{Assumptions.} \Cref{eq:factorization} assumes that the gases are
 independent given the hour, that each sensor is independent of the others
 given its parents, and that hours are independent with one set of CPTs for the
 whole year. The first is the strongest, since all three gases come from
-traffic; \cref{sec:latent} relaxes it. The second means a signal shared by
-several sensors is counted once per sensor, making the posterior
-overconfident (\cref{sec:results}). The third ignores autocorrelation and
-sensor drift.
+traffic; \cref{sec:latent} relaxes it. The second can make the posterior
+overconfident when several sensors share a signal the model does not include.
+The third ignores autocorrelation and sensor drift.
 
 \paragraph{Parameters.} A node with $K_X$ states and parent configurations
-$\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$ the network has
-900, and $S_4$, with five parents, accounts for 486 of them.
+$\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$,
+\cref{eq:factorization} has 900, and $S_4$, with five parents, accounts for
+486 of them.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.6\linewidth]{phase-3b}
-  \caption{Final network. Solid edges: nominal sensor targets; dashed: 
-  cross-sensitivities selected from data; $R$ is the latent emission regime
-  (\cref{sec:latent}). The diamond is air quality, derived from the estimated
-  concentrations rather than modeled.}
+  \caption{Final network (Phase~3b). Solid edges: nominal sensor targets;
+  dashed: cross-sensitivities selected from data; $R$ is the latent emission
+  regime (\cref{sec:latent}). The diamond is air quality, derived from the
+  estimated concentrations rather than modeled.}
   \label{fig:network}
 \end{figure}
 
 
 \subsection{Latent Emission Regime}
-% - R <- hour, weekday; gases <- R. Unobserved on every row.
-% - Purpose: make gases conditionally independent (check: within-R corr ~ 0).
-% - K_R chosen by val log-lik + restart stability.
 \label{sec:latent}
+\todo{Muska check this section}
 \Cref{eq:factorization} treats the three gases as independent given the hour,
-but they share one source: traffic. Within a single hour of day the mean
-gas--gas rank correlation is still 0.54 (0.66 overall), so the hour alone
-does not explain why the gases rise and fall together. We therefore add a
-latent emission regime $R \in \{1,\dots,K_R\}$ between the time inputs and the
-gases, and replace $P(G_j \mid H)$ with
+but they share one source, traffic, and still rise and fall together within a
+given hour (\cref{sec:results}). We therefore add a latent emission regime
+$R \in \{1,\dots,K_R\}$ between the time inputs and the gases, and replace
+$\prod_j P(G_j \mid H)$ with
 \begin{equation}
   P(G \mid H, D) = \sum_{r=1}^{K_R} P(R{=}r \mid H, D)
   \prod_{j} P(G_j \mid R{=}r).
   \label{eq:latent}
 \end{equation}
 $R$ has no column and is hidden on every hour, so its CPTs are learned only
-through EM (\cref{sec:em}). The weekday indicator $D$ is a parent of $R$ only,
-so it costs $(K_R-1)\cdot 48$ parameters rather than one table per gas.
+through EM (\cref{sec:em}). Because the gases depend on time only through $R$,
+the weekday indicator $D$ enters once, in $P(R \mid H, D)$, rather than in a
+table per gas. At $K_R = 3$ the regime and gas CPTs have 114 free parameters,
+against 144 for the three $P(G_j \mid H)$ tables, so the full network has 870
+rather than 900.
 
-If $R$ captures the shared cause, the gases should be nearly independent
-within a regime. We test this directly: we soft-assign each hour to the
-regimes by $P(R \mid e_t)$ and compute the gas--gas rank correlation within
-each regime, weighted by the posterior.
+If $R$ captures the shared cause, the gases should be nearly independent within
+a regime. We test this on validation hours where both gases of a pair are
+observed: each hour is soft-assigned to the regimes by its posterior over $R$,
+and we compute the posterior-weighted gas--gas rank correlation within each
+regime. We infer $R$ two ways: from all observed values, and from the sensors
+alone, which is stricter because the posterior cannot use the gas readings
+being tested.
 
-We chose $K_R \in \{2,3,4\}$ by mean validation log-likelihood per hour over
-three blocked split seeds, and kept a value only if it was reproducible across
-five restarts (\cref{sec:em}). We selected $K_R = 3$ with $R \leftarrow (H, D)$:
-it has 870 free parameters against 900 for the network without $R$. A direct
-$H \to G_j$ edge in addition to $R$ did not give a reproducible solution, so
-the gases depend on time only through $R$.
+We compared $K_R \in \{2,3,4\}$, with weekday or day of week as the day
+variable, by mean validation log-likelihood per hour over three split seeds,
+preferring configurations whose regimes are reproducible across restarts
+(\cref{sec:em}). Adding a direct $H \to G_j$ edge alongside $R$ never gave a
+reproducible solution, so we keep $R$ as the gases' only parent.
+\Cref{sec:results} discusses the choice of $K_R = 3$ with $R \leftarrow (H, D)$.
 
 \subsection{Learning with Missing Data (EM)}
 \label{sec:em}
 
-\paragraph{What is missing.} Hour is always recorded. The sensors and weather
-go missing together, during whole-device outages on 3.9\% of hours; we drop
-those 366 hours (8,991 remain), which leaves the sensors fully observed and the
-inputs complete, since inputs have no CPT and cannot be inferred. The reference gases are
-missing far more often: CO on 18.0\% of hours and NO$_x$ and NO$_2$ on 17.5\%.
-These gaps are concentrated at night, peaking at 54\% of CO readings at 4\,AM
-and 93\% of NO$_2$ readings at 3\,AM, consistent with a scheduled analyzer
-calibration. Because the missingness depends on the hour, which the model
-conditions on, rather than on the concentration itself, we treat the gaps as
-missing at random \citep{dempster1977em}. The latent regime $R$ has no column
-and is missing on every hour.
+\paragraph{What is hidden.} During training the reference gases are missing on
+17--18\% of hours (\cref{sec:data}), and the latent regime $R$ is missing on
+every hour. Because the reference gaps depend on the hour, which the model
+conditions on, rather than on the concentration itself, we treat them as
+missing at random.
 
 \paragraph{EM.} Rather than imputing missing values, EM averages over them. In
 the E-step, each training hour contributes expected counts
@@ -129,29 +124,27 @@ because CO is observed on 82\% of hours.
 \paragraph{Stability of the latent regime.} With $R$ fully hidden, the
 objective has several local optima, and the same regimes can come out in a
 different order on each run (label switching). We run several restarts, match
-states across runs by their gas profiles (Hungarian matching), and accept a
+states across runs by their gas profiles, and accept a
 number of regimes $K_R$ only if the matched states agree across restarts. That
 way the regimes mean the same thing every time we fit and can be interpreted
 (\cref{sec:results}).
 
 \subsection{Inference}
-% - Query P(G_j | hour, weekday, W, sensors); reference never evidence.
-% - Exact by enumeration over hidden joint (K_R * K^3 states); cost linear in N.
-% - Concentration estimate = sum_k P(bin k | e) c_bar_k; resolution floor.
-% Muska: the latent-regime case. Joyce: add or merge your part here.
+\label{sec:inference}
 At prediction time the evidence is $e_t = (H, D, W, S)$; the reference gases
 are never evidence. With the latent regime the hidden variables of an hour are
 $(R, G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$, only
-$K_R K^3 = 81$ joint states at $K = 3$, so we compute every posterior exactly
-by enumeration:
+$K_R K^3 = 81$ joint states at $K = K_R = 3$, so we compute every posterior
+exactly by enumeration:
 \begin{equation}
   P(G_j \mid e_t) \propto \sum_{r} \sum_{g_{-j}}
-  P(r \mid H, D) \prod_{i} P(g_i \mid r)
+  P(r \mid H, D) \prod_{k} P(g_k \mid r)
   \prod_{s} P\bigl(s \mid \mathrm{Pa}_G(s), T, \mathit{RH}\bigr).
 \end{equation}
-The cost is linear in the number of hours, and the same sums give the
-E-step's expected counts. The concentration estimate is the posterior mean
-over bins, $\hat c_j = \sum_k P(G_j{=}k \mid e_t)\,\bar c_{j,k}$, where
-$\bar c_{j,k}$ is the training mean of bin $k$. Because $\hat c_j$ can only
-mix the $K$ bin means, its error has a floor even with a perfect posterior;
-we report that resolution floor with every MAE (\cref{sec:results}).
+Without the regime, the sum over $r$ is replaced by $\prod_k P(g_k \mid H)$.
+The cost is linear in the number of hours, and the same sums give the E-step's
+expected counts. The concentration estimate is the posterior mean over bins,
+$\hat c_{j,t} = \sum_b P(G_j{=}b \mid e_t)\,\bar c_{j,b}$, where $\bar c_{j,b}$
+is the training mean of bin $b$. Because $\hat c_{j,t}$ can only mix the $K$
+bin means, its error has a floor even with a perfect posterior; we report that
+resolution floor with every MAE (\cref{sec:results}).
