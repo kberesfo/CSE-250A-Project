@@ -1,31 +1,39 @@
 \section{Data Sourcing and Processing}
 \label{sec:data}
-% ~1 page. Start from the proposal's Dataset section.
-%
-% - Source: UCI Air Quality \citep{vito2008airquality, devito2008calibration};
-%   9,357 hours, Mar 2004--Feb 2005, one roadside device.
-% - Variables table: kept / dropped / role (input, partially observed, observed).
-% - Missing data: -200 -> NaN; fraction missing per column (CO 18%,
-%   NOx/NO2 17.5%, NMHC 90%); reference gaps handled by EM, hours with missing
-%   weather dropped (366) because inputs have no CPT.
-% - Feature selection (cite App. cross-sensitivity study):
-%     NMHC dropped (90% missing); C6H6 dropped (deterministic function of S2);
-%     S2 dropped (no remaining gas parent); W = T + RH.
-% - Discretization: quantile bins fit on train; K = 3 default; bin count
-%   compared in Sec. 4 (3 vs 7).
-% - CHANGED from proposal: split is blocked by week (weeks shuffled into
-%   train/val/test), not one time cut; val for every choice, test once.
-%   Say why: neighbouring hours are near-duplicates.
-% - Limitations: one device, one site, one year; drift not modeled.
 
-\paragraph{What is missing.}\todo{-200 -> NaN; } Hour is always recorded. The sensors and weather
-go missing together, during whole-device outages on 3.9\% of hours; we drop
-those 366 hours (8,991 remain), which leaves the sensors fully observed and the
-inputs complete, since inputs have no CPT and cannot be inferred. The reference
-gases are missing far more often (\cref{fig:missing}): CO on 18.0\% of hours and
-NO$_x$ and NO$_2$ on 17.5\%. These gaps are concentrated at night, peaking at
-54\% of CO readings at 4\,AM and 93\% of NO$_2$ readings at 3\,AM, consistent
-with a scheduled analyzer calibration. Because the missingness depends on the
-hour, which the model conditions on, rather than on the concentration itself,
-we treat the gaps as missing at random \citep{dempster1977em}. The latent
-regime $R$ has no column and is missing on every hour.
+\paragraph{Source.} We use the UCI Air Quality dataset \citep{vito2008airquality, devito2008calibration}: 9,357 consecutive hourly averages (10 March 2004 to 4 April 2005) from one road-level multisensor device in an Italian city. Each hour has five metal-oxide sensors ($S_1$--$S_5$), temperature (T), relative humidity (RH) and absolute humidity (AH), and reference concentrations of CO, NMHC, C$_6$H$_6$, NO$_x$ and NO$_2$ from a co-located certified analyzer (\cref{tab:variables}).
+
+\begin{table}[t]
+    \centering\small
+    \setlength{\tabcolsep}{4pt}
+    \caption{Variables. Missing is the share of the 9,357 hours with no value.}
+    \label{tab:variables}
+    \begin{tabular}{@{}llrl@{}}
+        \toprule
+        Variable & Role & Missing & Decision \\
+        \midrule
+        Hour $H$, weekday $D$ & input, always observed & 0\% & kept \\
+        T, RH ($W$) & input, observed & 3.9\% & kept \\
+        $S_1, S_3, S_4, S_5$ & sensors, observed & 3.9\% & kept \\
+        CO, NO$_x$, NO$_2$ & reference gases, partially observed & 18.0, 17.5, 17.5\% & kept \\
+        Regime $R$ & latent, never observed & 100\% & modeled (\cref{sec:latent}) \\
+        \midrule
+        NMHC & reference gas & 90.2\% & dropped: too sparse \\
+        C$_6$H$_6$ & reference gas & 3.9\% & dropped: a function of $S_2$ \\
+        $S_2$ & sensor & 3.9\% & dropped: no gas parent left \\
+        AH & input & 3.9\% & dropped: set by T and RH \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Missing data.} The raw file codes a missing reading as $-200$; we recode these as missing. The sensors and weather go missing together, during whole-device outages on 3.9\% of hours. We drop those 366 hours (8,991 remain), which leaves the sensors fully observed and the inputs complete, since inputs have no CPT and cannot be inferred. The reference gases are missing far more often: CO on 18.0\% of hours and NO$_x$ and NO$_2$ on 17.5\%. There are two patterns. A nightly dropout hits NO$_x$ and NO$_2$ on 93\% of 3\,AM readings and CO on 54\% of 4\,AM readings (\cref{fig:missing-hour}), against 14--20\% at other hours, consistent with a scheduled calibration. Larger are multi-day outages, which hold 84\% of the missing CO hours and 77\% of the missing NO$_x$ and NO$_2$ hours (gaps of 24 hours or more, the longest 173 hours).
+
+We treat both as missing at random given the always-observed hour, weather and sensors. The nightly dropout depends on the hour, which the model conditions on, and the outages look like analyzer downtime rather than a response to the gas level: the sensors read similarly when their reference is missing (median $S_1$ 1,015 vs.\ 1,075, $S_3$ 869 vs.\ 792, $S_4$ 1,467 vs.\ 1,460), though this cannot be checked. EM \citep{dempster1977em} then uses every retained hour, including those with no reference reading; the latent regime $R$ has no column and is missing on every hour. 
+
+\paragraph{Variable selection.} NMHC is observed on only 914 hours, all but one between 10 March and 30 April 2004. C$_6$H$_6$ is an almost exact function of $S_2$ (a cubic fit gives $R^2 \approx 0.99998$, and both are missing on the same rows), and its partial correlation with every other sensor vanishes once $S_2$ is held fixed ($|\rho| \le 0.02$), so it is not independent evidence (\cref{app:cross}). $S_2$ is then dropped, since NMHC and C$_6$H$_6$ were its only candidate gas parents. The weather node is $W = (T, \mathit{RH})$: AH is mostly determined by them, and a third parent would triple every sensor CPT. 
+
+\paragraph{Discretization.} Every continuous variable (gases, sensors, T and RH) is cut into $K$ quantile bins whose edges are fit on the training split only and applied unchanged to validation and test; hour keeps its 24 values. We use $K = 3$ by default and compare $K = 5$ in \cref{sec:results}. Each gas bin also keeps the mean raw concentration of its training hours, which turns a posterior over bins back into a concentration.
+
+\paragraph{Splits (changed from proposal).} The proposal planned one chronological split. Instead, we cut the 8,991 hours into 7-day blocks, shuffle the blocks and assign them 50/25/25 to train, validation, and test (about 4,500, 2,200, and 2,300 hours), for seeds 0--2. Neighboring hours are near-duplicates (the errors of consecutive hours have lag-1 autocorrelation 0.68--0.88), so a split by hour would leak copies of test hours into training; whole weeks avoid that, and each split draws weeks from the whole year. Validation makes every choice (bin count, edge set, number of regime states) and test is scored once, on the chosen configuration. A chronological split is kept only as a drift check (\cref{sec:results}).
+
+\paragraph{Limitations.} The data are one device, at one site, over one year, so held-out weeks measure interpolation within that year, not transfer to another year or unit, and the reference analyzer is treated as ground truth. Drift is not modeled: the CPTs are fixed for the whole year. In the chronological check, the Phase-2 network trained on March--September has more than double the NO$_x$ error on the following months and a NO$_2$ estimate that falls behind the hour-of-day baseline, though part of that is a seasonal shift in the gases rather than drift.
