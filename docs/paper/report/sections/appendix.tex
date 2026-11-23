@@ -21,52 +21,53 @@ $\lambda = \sum_{x'} \hat N(x',u) + K_X \alpha$, which is the update in
 
 \section{Network Variants}
 \label{app:networks}
-We built the model in stages, each adding one feature to the network. The
+We built the model in stages, each adding one feature to the network and
+compared on the same splits, bins and evidence (\cref{fig:variants}). The
 baseline is the simplest model: each gas depends only on the hour,
 $P(G_j \mid H)$, and the sensors are ignored. Phase~1 adds the sensors for a
-single gas, CO. Phase~2 adds NO$_x$ and NO$_2$ and the cross-sensitivity edges
-from \cref{app:cross}; it is the ablation for Q2. Phase~3a \todo{one line: what
-3a adds}. Phase~3b, the final model (\cref{fig:network}), replaces
-hour~$\to$~gas with the latent emission regime (\cref{sec:latent}).
+single gas, CO: every sensor is a child of CO and the weather. Phase~2 adds
+NO$_x$ and NO$_2$ and ties each sensor only to its nominal gas
+($S_1 \leftarrow$ CO, $S_3 \leftarrow$ NO$_x$, $S_4 \leftarrow$ NO$_2$;
+$S_5$ has weather parents only). Phase~3a adds the cross-sensitivity edges
+from \cref{app:cross} ($S_4$ and $S_5 \leftarrow$ CO, NO$_x$), so 2~$\to$~3a
+measures what the cross edges contribute; it is also the ablation for Q2,
+since it is the final network without the regime. Phase~3b, the final model
+(\cref{fig:network}), replaces hour~$\to$~gas with the latent emission regime
+(\cref{sec:latent}). Every phase reports the same concentration evaluation
+at 3 and 5 bins on validation; only the baseline, Phase~1 and Phase~3b are
+refit and scored on test.
 
-\begin{figure}[p]
+\begin{figure}[h]
   \centering
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-0}
-    \caption{Hour-only baseline.}
-    \label{fig:net-baseline}
+    \includegraphics[width=\linewidth]{phase-0}
+    \caption{Baseline}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-1}
-    \caption{Phase~1: CO only.}
-    \label{fig:net-phase1}
+    \includegraphics[width=\linewidth]{phase-1}
+    \caption{Phase~1}
   \end{subfigure}
 
   \vspace{0.8em}
+
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-2}
-    \caption{Phase~2: three gases, cross-sensitivities.}
-    \label{fig:net-phase2}
+    \includegraphics[width=\linewidth]{phase-2}
+    \caption{Phase~2}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-3a}
-    \caption{Phase~3a: \todo{short label}.}
-    \label{fig:net-phase3a}
+    \includegraphics[width=\linewidth]{phase-3a}
+    \caption{Phase~3a}
   \end{subfigure}
-
-  \vspace{0.8em}
-  \begin{subfigure}[t]{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-3b}
-    \caption{Phase~3b: latent emission regime (final; also \cref{fig:network}).}
-    \label{fig:net-phase3b}
-  \end{subfigure}
-  \caption{Network for each phase, from the hour-only baseline to the final model.}
-  \label{fig:net-variants}
+  \caption{Network variants. Dark gray: always observed; light gray, dashed
+  border: gases (partially observed in training, the query at prediction);
+  solid edges: nominal sensor targets; dashed edges: cross-sensitivities. The
+  diamond is the concentration estimate $\hat c$, computed from each gas's bin
+  posterior. The final network (Phase~3b) is \cref{fig:network}.}
+  \label{fig:variants}
 \end{figure}
 
 \section{Missing Data}
