@@ -10718,7 +10718,8 @@ W = (T, RH) ──► every sensor
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="12.-Test-set:-chosen-configuration,-reported-once">12. Test set: chosen configuration, reported once<a class="anchor-link" href="#12.-Test-set:-chosen-configuration,-reported-once">¶</a></h2><p>Everything above was chosen on val. This is the only cell that reads <strong>test</strong>. Same fitted models as the grid (trained on train only), same metrics.</p>
+<h2 id="12.-Test-set:-chosen-configuration">12. Test set: chosen configuration<a class="anchor-link" href="#12.-Test-set:-chosen-configuration">¶</a></h2><p><em>Exploratory test check, models fit on train only. Superseded by <code>notebooks/final/eval.ipynb</code>; not used in the report.</em></p>
+<p>Everything above was chosen on val. Same fitted models as the grid (trained on train only), same metrics.</p>
 </div>
 </div>
 </div>
@@ -10900,7 +10901,7 @@ W = (T, RH) ──► every sensor
 <li>CO and NOx are well calibrated (ECE 0.035, 0.038, better than the baseline). NO2 is overconfident (0.076 vs 0.045).</li>
 </ul>
 </li>
-<li><p><strong>Test</strong> (5 bins, reported once):</p>
+<li><p><strong>Test</strong> (5 bins; exploratory check, models fit on train only, superseded by <code>notebooks/final/eval.ipynb</code> and not used in the report):</p>
 <ul>
 <li>CO: MAE 0.597 ± 0.048 vs 0.935 mg/m³, log-lik −0.984 vs −1.378 (n = 1751).</li>
 <li>NOx: MAE 97.5 ± 16.0 vs 143.9 ppb (n = 1776).</li>
