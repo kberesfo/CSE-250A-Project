@@ -1,6 +1,7 @@
 % Appendices do not count toward the 7-page limit.
 % Good homes for: full CPTs, derivations, extra configurations, code pointers.
 
+\FloatBarrier
 \section{M-Step Under a Dirichlet Prior}
 \label{app:em}
 For one CPT row with parent configuration $u$, the M-step maximizes the
@@ -19,6 +20,33 @@ $\lambda = \sum_{x'} \hat N(x',u) + K_X \alpha$, which is the update in
 % Optional: P(gas | Event) table (3 states x 3 gases x 3 bins) from
 % notebooks/phase3b/eval.ipynb, section 6, if it is not in Sec. 4.
 
+\FloatBarrier
+\section{Variables}
+\label{app:variables}
+\begin{table}[h]
+    \centering\small
+    \setlength{\tabcolsep}{4pt}
+    \caption{Variables. Missing is the share of the 9,357 hours with no value.}
+    \label{tab:variables}
+    \begin{tabular}{@{}llrl@{}}
+        \toprule
+        Variable & Role & Missing & Decision \\
+        \midrule
+        Hour $H$, weekday $D$ & input, always observed & 0\% & kept \\
+        T, RH ($W$) & input, observed & 3.9\% & kept \\
+        $S_1, S_3, S_4, S_5$ & sensors, observed & 3.9\% & kept \\
+        CO, NO$_x$, NO$_2$ & reference gases, partially observed & 18.0, 17.5, 17.5\% & kept \\
+        Regime $R$ & latent, never observed & 100\% & modeled (\cref{sec:latent}) \\
+        \midrule
+        NMHC & reference gas & 90.2\% & dropped: too sparse \\
+        C$_6$H$_6$ & reference gas & 3.9\% & dropped: a function of $S_2$ \\
+        $S_2$ & sensor & 3.9\% & dropped: no gas parent left \\
+        AH & input & 3.9\% & dropped: set by T and RH \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
 \section{Network Variants}
 \label{app:networks}
 We built the model in stages, each adding one feature to the network and
@@ -70,6 +98,7 @@ refit and scored on test.
   \label{fig:variants}
 \end{figure}
 
+\FloatBarrier
 \section{Missing Data}
 \label{app:missing}
 
@@ -93,6 +122,7 @@ refit and scored on test.
   \label{fig:missing}
 \end{figure}
 
+\FloatBarrier
 \section{Cross-Sensitivity Study}
 \label{app:cross}
 
@@ -159,6 +189,31 @@ make the posterior overconfident (\cref{sec:bn}).
   \label{fig:cross-gain}
 \end{figure}
 
+\FloatBarrier
+\section{Additional Results}
+\label{app:test}
+\phantomsection\label{app:trace}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{final/test_mae_vs_floor}
+  \caption{Test MAE against the resolution floor at 3 bins (top) and 5 bins
+  (bottom), mean $\pm$ std over three split seeds, each panel in its gas's
+  units.}
+  \label{fig:test-mae}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{phase3b/concentration_trace_NOx}
+  \caption{Phase~3b NO$_x$ estimate (green) against the reference (black) on
+  one validation week, 3 bins. Shaded bands are the bins and dotted lines the
+  training bin means: the estimate can only mix those means, so it caps peaks
+  at the top bin's mean and overshoots when a confident ``high'' posterior
+  meets a moderate hour.}
+  \label{fig:trace}
+\end{figure}
+
+\FloatBarrier
 \section{Code and Results}
 \label{app:code}
 All code and results are at \url{https://github.com/kberesfo/CSE-250A-Project}.
@@ -171,3 +226,4 @@ download the data, and rerun every notebook on a fresh kernel:
 uv run python scripts/get_data
 make
 \end{verbatim}
+\FloatBarrier
