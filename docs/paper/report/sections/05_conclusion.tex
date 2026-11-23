@@ -37,14 +37,13 @@
 
 \subsection{Findings}
 
-\paragraph{Q1 (estimation).} The final model (Phase~3b) beats the hour-of-day baseline on every gas, reducing
-concentration error (MAE) by \val{37\%} for CO, \val{34\%} for NO$_x$ and \val{16\%}
-for NO$_2$ (\cref{sec:results}), and on CO it matches the single-gas network 
-(Phase~1) with an MAE of \val{0.54}~mg/m$^3$ while staying calibrated and covering three gases.
-For CO and NO$_x$, it closes roughly \val{80\%} of the gap to the 3-bin resolution floor,
-which means the bins now limit accuracy; for NO$_2$, however, it closes only \val{33\%} because its own sensor
+\paragraph{Q1 (estimation).} On the test set, the final model (Phase~3b) beats the hour-of-day baseline on every gas, reducing
+concentration error (MAE) by 37\% for CO, 32\% for NO$_x$ and 18\%
+for NO$_2$ (\cref{sec:results}), and on CO it matches the single-gas network
+(Phase~1) with an MAE of 0.60~mg/m$^3$ while putting more probability on the true CO bin and covering three gases.
+For CO and NO$_x$, it closes 87\% and 71\% of the gap to the 3-bin resolution floor,
+which means the bins now limit accuracy; for NO$_2$, however, it closes only 39\% because its own sensor
 tracks CO more than NO$_2$.
-\todo{Replace with test-set numbers once final.}
 
 \paragraph{Q2 (shared structure).} On validation, the latent regime explains
 most of the co-movement between gases, lowering their mean rank correlation
