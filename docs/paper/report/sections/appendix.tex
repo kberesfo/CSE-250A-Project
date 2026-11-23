@@ -204,12 +204,32 @@ make the posterior overconfident (\cref{sec:bn}).
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{phase3b/concentration_trace_NOx}
-  \caption{Phase~3b NO$_x$ estimate (green) against the reference (black) on
-  one validation week, 3 bins. Shaded bands are the bins and dotted lines the
-  training bin means: the estimate can only mix those means, so it caps peaks
-  at the top bin's mean and overshoots when a confident ``high'' posterior
-  meets a moderate hour.}
+  \begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{phase3b/concentration_trace_CO}
+    \caption{CO (mg/m$^3$)}
+  \end{subfigure}
+
+  \vspace{0.5em}
+
+  \begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{phase3b/concentration_trace_NOx}
+    \caption{NO$_x$ (ppb)}
+  \end{subfigure}
+
+  \vspace{0.5em}
+
+  \begin{subfigure}{\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{phase3b/concentration_trace_NO2}
+    \caption{NO$_2$ ($\mu$g/m$^3$)}
+  \end{subfigure}
+  \caption{Phase~3b concentration estimates (green) against the reference
+  (black) on one validation week, 3 bins, split seed 0. Shaded bands are the
+  bins and dotted lines the training bin means: each estimate can only mix
+  those means, so it caps peaks at the top bin's mean and overshoots when a
+  confident ``high'' posterior meets a moderate hour.}
   \label{fig:trace}
 \end{figure}
 
