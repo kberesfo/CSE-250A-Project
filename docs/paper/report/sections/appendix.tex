@@ -98,6 +98,27 @@ refit and scored on test.
   \label{fig:variants}
 \end{figure}
 
+\begin{table}[h]
+  \centering
+  \caption{Validation MAE at 3 bins as the network grows (mean over three
+  split seeds). Phase~1 estimates CO only.}
+  \label{tab:ladder}
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    Model & CO & NO$_x$ & NO$_2$ \\
+    \midrule
+    Hour only                            & 0.857 & 136.5 & 32.0 \\
+    Phase~1 (CO, every sensor)           & 0.544 & --    & --   \\
+    Phase~2 (nominal edges)              & 0.598 & 97.9  & 32.2 \\
+    Phase~3a (+ cross-sensitivity edges) & 0.544 & 91.8  & 31.1 \\
+    Phase~3b (+ latent regime)           & 0.541 & 90.3  & 26.8 \\
+    \midrule
+    Resolution floor                     & 0.461 & 74.1  & 17.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \FloatBarrier
 \section{Missing Data}
 \label{app:missing}

@@ -70,42 +70,12 @@ evidence \emph{raises} validation log-likelihood in every seed.
 Five bins lower every MAE (test CO $0.601 \to 0.521$, NO$_x$ $99.9 \to 82.5$,
 NO$_2$ $25.6 \to 23.3$), but the floor drops faster (CO $0.549 \to 0.366$), so
 the gap closed falls (CO 0.87 to 0.73): finer bins raise the ceiling but leave
-fewer training hours per CPT row (\cref{fig:test-mae}).
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.9\linewidth]{final/test_mae_vs_floor}
-  \caption{Test MAE against the resolution floor at 3 bins (top) and 5 bins
-  (bottom), mean $\pm$ std over three split seeds, each panel in its gas's
-  units.}
-  \label{fig:test-mae}
-\end{figure}
+fewer training hours per CPT row (\cref{fig:test-mae} in \cref{app:test}).
 
 \subsection{Q2: Shared Structure}
 \label{sec:q2}
 
-\begin{table}[t]
-  \centering
-  \caption{Validation MAE at 3 bins as the network grows (mean over three
-  split seeds; \cref{app:networks}). Phase~1 estimates CO only.}
-  \label{tab:ladder}
-  \small
-  \begin{tabular}{lccc}
-    \toprule
-    Model & CO & NO$_x$ & NO$_2$ \\
-    \midrule
-    Hour only                            & 0.857 & 136.5 & 32.0 \\
-    Phase~1 (CO, every sensor)           & 0.544 & --    & --   \\
-    Phase~2 (nominal edges)              & 0.598 & 97.9  & 32.2 \\
-    Phase~3a (+ cross-sensitivity edges) & 0.544 & 91.8  & 31.1 \\
-    Phase~3b (+ latent regime)           & 0.541 & 90.3  & 26.8 \\
-    \midrule
-    Resolution floor                     & 0.461 & 74.1  & 17.0 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\Cref{tab:ladder} shows what each addition buys. Tying each sensor only to
+On validation, each addition to the network buys something (\cref{tab:ladder} in \cref{app:networks}). Tying each sensor only to
 its nominal gas (Phase~2) loses CO accuracy, because the other sensors also
 carry CO information; the cross-sensitivity edges (Phase~3a) recover it,
 lowering MAE relative to Phase~2 by 9.2\%, 6.1\% and 3.4\% for CO, NO$_x$ and
