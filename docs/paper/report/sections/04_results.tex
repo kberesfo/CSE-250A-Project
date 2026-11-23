@@ -1,50 +1,100 @@
 \section{Results and Discussion}
 \label{sec:results}
-\section{Results and Discussion}
-\label{sec:results}
+
 % ~2.5 pages (gets the space freed by dropping the HMM).
 % Organize by research question; every number comes from
 % notebooks/<phase>/eval.ipynb -> results/<phase>/ and its [Exp] issue.
 % Report val for every comparison; test once, in the main table only.
 
 \subsection{Experimental Setup}
-% ~0.25 page.
-% - Split: blocked by week, train/val/test; seeds (0,1,2 for the study).
-% - Metrics: accuracy (chance ~1/3 at 3 quantile bins), mean log-lik,
-%   macro-F1 / BER; concentration MAE/RMSE (mg/m^3) vs resolution floor.
-% - Baseline: hour-of-day only, same evidence interface.
-% - Configurations: Phase 1 (CO only), Phase 2 (3 gases + cross edges),
-%   Phase 3a (\todo), Phase 3b (latent regime, K_R in {2,3,4}); K = 3 vs 7 bins.
+\label{sec:setup}
+Splits are blocked by week into train, validation and test, repeated for seeds 0, 1 and 2.
+Every choice (bin count, edges, $K$) is made on validation; test is scored once, after
+refitting on train plus validation.
 
-\subsection{Quantitative Results}
-% ~1 page. One main table + 1 figure.
-% - Main table: rows = baseline, Phase 1, 2, 3a, 3b; cols = acc, LL, MAE,
-%   floor; per gas where it applies. (Test numbers here, once.)
-% - Q1: Phase 1 vs baseline: acc 0.828 vs 0.591 (+23.7 pp), LL -0.662 vs
-%   -0.854, MAE 0.556 vs floor 0.526 (val, n = 2064).
-% - Bins: 7 bins lowers accuracy (more classes) but MAE drops to 0.448;
-%   argue MAE is the fair comparison across bin counts.
-% - Q2: Phase 2 vs Phase 1 per gas \todo; does adding cross edges help NO2?
-% - Q3: Phase 3b vs Phase 2: +0.39 nats/h val LL; \todo accuracy / MAE.
-% - Figure: val LL or MAE by phase, or model-selection plot over K_R.
+We score the concentration estimate $\hat{c}=\sum_k P(\mathrm{bin}_k\mid e)\,\bar{c}_k$
+by its mean absolute error (MAE), in each gas's units (CO in mg/m$^3$, NO$_x$ in ppb,
+NO$_2$ in $\mu$g/m$^3$). The \emph{resolution floor} is the MAE of an oracle that knows the true bin
+and outputs its mean. We report
+\[
+\text{skill}=1-\frac{\mathrm{MAE}_{\text{model}}}{\mathrm{MAE}_{\text{baseline}}},\qquad
+\text{gap closed}=\frac{\mathrm{MAE}_{\text{baseline}}-\mathrm{MAE}_{\text{model}}}
+{\mathrm{MAE}_{\text{baseline}}-\mathrm{MAE}_{\text{floor}}},
+\]
+which are unitless and so comparable across gases. The baseline is hour of day only, with the same
+evidence interface. The mean log-likelihood of the true bin is a secondary metric and is only
+comparable at the same bin count. Numbers are mean $\pm$ std over the three seeds.
 
-\subsection{Qualitative Analysis}
-% ~0.75 page.
-% - CPTs match intuition: P(CO | hour) shows rush hours / night lows.
-% - Cross-sensitivity: S4 tracks CO more than nominal NO2 -> NO2 hardest gas;
-%   high raw corr edges rejected (S1<-C6H6, S5<-NO2) = shared traffic signal.
-% - Latent regime: states by hour/weekday (posterior_by_hour figure);
-%   B1 check: within-regime gas corr ~0.05 vs ~0.54 within hour
-%   (\todo confirm sensors-only number).
-% - Failure modes: overconfidence from double-counted sensors (drop-one
-%   ablation); C6H6 is a re-reading of S2; drift ignored.
+\subsection{Q1: Estimation}
+\label{sec:q1}
+% TODO(Muska's run): fill the -- cells from results/final/test_grid.csv; set headline bin count.
+\begin{table}[htbp]
+\centering
+\caption{Test concentration error (mean $\pm$ std over seeds). Phase 1 models CO only.}
+\label{tab:main}
+\begin{tabular}{llcccc}
+\toprule
+Gas & Model & MAE & Floor & Skill & Gap closed \\
+\midrule
+CO & Hour baseline & -- & -- & -- & -- \\
+   & Phase 1       & -- & -- & -- & -- \\
+   & Phase 3b      & -- & -- & -- & -- \\
+NO$_x$ & Hour baseline & -- & -- & -- & -- \\
+   & Phase 3b      & -- & -- & -- & -- \\
+NO$_2$ & Hour baseline & -- & -- & -- & -- \\
+   & Phase 3b      & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%\begin{figure}[t]
+%\centering
+% \includegraphics[width=\linewidth]{figures/final/test_mae_3bins.png} % update name/bin count
+% \caption{Test MAE per gas: hour baseline, Phase 1, Phase 3b and the resolution floor.}
+% \label{fig:test-mae}
+% \end{figure}
+
+On validation with 3 bins, Phase 1 lowers CO MAE to $0.544\pm0.031$ mg/m$^3$ from
+$0.857\pm0.039$ for the hour baseline, closing about 79\% of the gap to the
+$0.461$ floor, so most of the remaining error comes from the coarse bins. With 5 bins the MAE falls to
+$0.475\pm0.033$, but the floor falls faster ($0.320$) and only about 71\% of the gap is closed:
+finer bins raise the ceiling but leave fewer training hours per CPT row.
+NO$_2$ is the hard gas: its MAE is within noise of the baseline in the earlier phases and it stays
+furthest from its floor (\cref{tab:ladder}). Phase 3b and Phase 1 use the same sensors and test hours,
+so their CO comparison is fair (\cref{tab:main}) %, \cref{fig:test-mae}).
+
+\subsection{Q2: Shared Structure}
+\label{sec:q2}
+\begin{table}[htbp]
+\centering
+\caption{Validation MAE, 3 bins (mean over seeds 0--2). Floors: CO 0.461, NO$_x$ 74.1, NO$_2$ 17.0.}
+\label{tab:ladder}
+\begin{tabular}{lccc}
+\toprule
+Model & CO & NO$_x$ & NO$_2$ \\
+\midrule
+Hour baseline            & 0.857 & 136.5 & 32.0 \\
+Phase 1                  & 0.544 & --    & --   \\
+Phase 2 (nominal edges)  & 0.598 & 97.9  & 32.2 \\
+Phase 3a (+ cross edges) & 0.544 & 91.8  & 31.1 \\
+Phase 3b (+ latent regime) & 0.541 & 90.3 & 26.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Val ladder table, concentration MAE per gas at the headline bin count: hour → Phase 1 → Phase 2 (nominal) → 3a (+ cross edges) → 3b (+ latent regime). 2 → 3a uses 3a's "vs Phase 2" column; 3a → 3b uses 3b's "vs Phase 3a" column.
+% The ablation for the regime is 3b vs 3a, not 3b vs Phase 2. The "+0.39 nats/h" joint fit in the 3b notebook is against the 3a network (phase2_network there is mislabeled).
+% B1 check: mean gas–gas rank correlation 0.66 raw, 0.54 within hour, 0.05 within regime, 0.39 with the regime inferred from sensors only; NOx–NO2 keeps about 0.22. Figure: figures/phase3b/b1_check.png.
+% Per-gas MAE barely changes from 3a to 3b. The regime fixes correlations between gases, which per-gas metrics can't see. Fill the \todo with 3b's "vs Phase 3a" numbers (mean ± std).
+
+\subsection{What the Model Learned}
+\label{sec:learned}
+% Regimes: quiet / moderate / busy (weekday peaks 08–10 and 17–20 h); figure p_event_given_hour_weekday.png; P(gas | Event) table in the appendix; seeds differ by ≤ 0.08.
+% Cross-sensitivity (1–2 lines, details in \cref{app:cross}): S4 tracks CO more than its nominal NO2, so NO2 is the hardest gas to read.
+% Failure modes: peaks capped at the top bin mean (concentration trace figure); seasonal drift (Phase 2 drift check); overconfidence from double-counted sensors. Keep this one: Phase 1's drop-one-sensor ablation is current (removing S1 or S5 raises val log-lik in every seed).
 
 \subsection{Convergence and Stability}
-% ~0.5 page.
-% - EM objective monotone in every run; Phase 1 converges in 3 iterations
-%   (CO observed 82% of hours).
-% - Phase 3b: local optima + label switching; restarts matched by Hungarian;
-%   K_R = 3 stable, K_R = 4 not identifiable across restarts; K_R = 2 is
-%   the strict alternative. Stability is an interpretability criterion,
-%   not a fit criterion.
-% - Scalability: exact
+\label{sec:convergence}
+% Every EM run is monotone; 3b converges in ≤ 57 iterations. Fill the Phase 1 iteration count from its current run.
+% K selection: val log-lik rises with K, but K = 4 restarts disagree (up to 0.60); K = 3 Event-only is a flagged judgement call; K = 2 is the strict alternative.
+% Scalability: exact enumeration over K_R · K³ hidden states (81 at 3 bins, 375 at 5), linear in N; S4's parent configurations (3⁵ = 243 at 3 bins) dominate the parameter count.
