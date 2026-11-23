@@ -1,6 +1,7 @@
 % Appendices do not count toward the 7-page limit.
 % Good homes for: full CPTs, derivations, extra configurations, code pointers.
 
+\FloatBarrier
 \section{M-Step Under a Dirichlet Prior}
 \label{app:em}
 For one CPT row with parent configuration $u$, the M-step maximizes the
@@ -19,56 +20,85 @@ $\lambda = \sum_{x'} \hat N(x',u) + K_X \alpha$, which is the update in
 % Optional: P(gas | Event) table (3 states x 3 gases x 3 bins) from
 % notebooks/phase3b/eval.ipynb, section 6, if it is not in Sec. 4.
 
+\FloatBarrier
+\section{Variables}
+\label{app:variables}
+\begin{table}[h]
+    \centering\small
+    \setlength{\tabcolsep}{4pt}
+    \caption{Variables. Missing is the share of the 9,357 hours with no value.}
+    \label{tab:variables}
+    \begin{tabular}{@{}llrl@{}}
+        \toprule
+        Variable & Role & Missing & Decision \\
+        \midrule
+        Hour $H$, weekday $D$ & input, always observed & 0\% & kept \\
+        T, RH ($W$) & input, observed & 3.9\% & kept \\
+        $S_1, S_3, S_4, S_5$ & sensors, observed & 3.9\% & kept \\
+        CO, NO$_x$, NO$_2$ & reference gases, partially observed & 18.0, 17.5, 17.5\% & kept \\
+        Regime $R$ & latent, never observed & 100\% & modeled (\cref{sec:latent}) \\
+        \midrule
+        NMHC & reference gas & 90.2\% & dropped: too sparse \\
+        C$_6$H$_6$ & reference gas & 3.9\% & dropped: a function of $S_2$ \\
+        $S_2$ & sensor & 3.9\% & dropped: no gas parent left \\
+        AH & input & 3.9\% & dropped: set by T and RH \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
 \section{Network Variants}
 \label{app:networks}
-We built the model in stages, each adding one feature to the network. The
+We built the model in stages, each adding one feature to the network and
+compared on the same splits, bins and evidence (\cref{fig:variants}). The
 baseline is the simplest model: each gas depends only on the hour,
 $P(G_j \mid H)$, and the sensors are ignored. Phase~1 adds the sensors for a
-single gas, CO. Phase~2 adds NO$_x$ and NO$_2$ and the cross-sensitivity edges
-from \cref{app:cross}; it is the ablation for Q2. Phase~3a \todo{one line: what
-3a adds}. Phase~3b, the final model (\cref{fig:network}), replaces
-hour~$\to$~gas with the latent emission regime (\cref{sec:latent}).
+single gas, CO: every sensor is a child of CO and the weather. Phase~2 adds
+NO$_x$ and NO$_2$ and ties each sensor only to its nominal gas
+($S_1 \leftarrow$ CO, $S_3 \leftarrow$ NO$_x$, $S_4 \leftarrow$ NO$_2$;
+$S_5$ has weather parents only). Phase~3a adds the cross-sensitivity edges
+from \cref{app:cross} ($S_4$ and $S_5 \leftarrow$ CO, NO$_x$), so 2~$\to$~3a
+measures what the cross edges contribute; it is also the ablation for Q2,
+since it is the final network without the regime. Phase~3b, the final model
+(\cref{fig:network}), replaces hour~$\to$~gas with the latent emission regime
+(\cref{sec:latent}). Every phase reports the same concentration evaluation
+at 3 and 5 bins on validation; only the baseline, Phase~1 and Phase~3b are
+refit and scored on test.
 
-\begin{figure}[p]
+\begin{figure}[h]
   \centering
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-0}
-    \caption{Hour-only baseline.}
-    \label{fig:net-baseline}
+    \includegraphics[width=\linewidth]{phase-0}
+    \caption{Baseline}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-1}
-    \caption{Phase~1: CO only.}
-    \label{fig:net-phase1}
+    \includegraphics[width=\linewidth]{phase-1}
+    \caption{Phase~1}
   \end{subfigure}
 
   \vspace{0.8em}
+
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-2}
-    \caption{Phase~2: three gases, cross-sensitivities.}
-    \label{fig:net-phase2}
+    \includegraphics[width=\linewidth]{phase-2}
+    \caption{Phase~2}
   \end{subfigure}\hfill
   \begin{subfigure}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-3a}
-    \caption{Phase~3a: \todo{short label}.}
-    \label{fig:net-phase3a}
+    \includegraphics[width=\linewidth]{phase-3a}
+    \caption{Phase~3a}
   \end{subfigure}
-
-  \vspace{0.8em}
-  \begin{subfigure}[t]{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{phase-3b}
-    \caption{Phase~3b: latent emission regime (final; also \cref{fig:network}).}
-    \label{fig:net-phase3b}
-  \end{subfigure}
-  \caption{Network for each phase, from the hour-only baseline to the final model.}
-  \label{fig:net-variants}
+  \caption{Network variants. Dark gray: always observed; light gray, dashed
+  border: gases (partially observed in training, the query at prediction);
+  solid edges: nominal sensor targets; dashed edges: cross-sensitivities. The
+  diamond is the concentration estimate $\hat c$, computed from each gas's bin
+  posterior. The final network (Phase~3b) is \cref{fig:network}.}
+  \label{fig:variants}
 \end{figure}
 
+\FloatBarrier
 \section{Missing Data}
 \label{app:missing}
 
@@ -92,6 +122,7 @@ hour~$\to$~gas with the latent emission regime (\cref{sec:latent}).
   \label{fig:missing}
 \end{figure}
 
+\FloatBarrier
 \section{Cross-Sensitivity Study}
 \label{app:cross}
 
@@ -158,6 +189,31 @@ make the posterior overconfident (\cref{sec:bn}).
   \label{fig:cross-gain}
 \end{figure}
 
+\FloatBarrier
+\section{Additional Results}
+\label{app:test}
+\phantomsection\label{app:trace}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{final/test_mae_vs_floor}
+  \caption{Test MAE against the resolution floor at 3 bins (top) and 5 bins
+  (bottom), mean $\pm$ std over three split seeds, each panel in its gas's
+  units.}
+  \label{fig:test-mae}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{phase3b/concentration_trace_NOx}
+  \caption{Phase~3b NO$_x$ estimate (green) against the reference (black) on
+  one validation week, 3 bins. Shaded bands are the bins and dotted lines the
+  training bin means: the estimate can only mix those means, so it caps peaks
+  at the top bin's mean and overshoots when a confident ``high'' posterior
+  meets a moderate hour.}
+  \label{fig:trace}
+\end{figure}
+
+\FloatBarrier
 \section{Code and Results}
 \label{app:code}
 All code and results are at \url{https://github.com/kberesfo/CSE-250A-Project}.
@@ -170,3 +226,4 @@ download the data, and rerun every notebook on a fresh kernel:
 uv run python scripts/get_data
 make
 \end{verbatim}
+\FloatBarrier

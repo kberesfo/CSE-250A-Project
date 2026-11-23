@@ -1,47 +1,33 @@
 \section{Problem Description}
 \label{sec:problem}
 % ~0.5 page. Models: hour-only baseline, Phase 1, Phase 3b (final).
-% Q1 Estimation (Sec. 4.2); Q2 Shared structure / regime (Sec. 4.3).
-% Intermediate phases (2, 3a) are ablations; network figures in App. networks.
 
-Urban air quality is monitored by reference stations: certified analyzers that
-are accurate but expensive, so cities can afford only a few. Low-cost chemical
-sensors could fill the gaps, but their readings are noisy, drift over time and
-respond to weather and to gases other than their target, so they must be
-calibrated against a reference in the field \citep{devito2008calibration}.
+Reference stations measure urban air pollution accurately but are expensive,
+so cities have few of them. Low-cost metal-oxide sensors could fill the gaps,
+but they are noisy, drift, and respond to weather and to gases other than their
+target, so they must be calibrated in the field against a reference
+\citep{devito2008calibration}. We treat calibration as probabilistic
+inference: the true concentration is latent, and the sensors are noisy,
+indirect observations of it. A co-located reference analyzer provides ground
+truth for training, but its CO, NO$_x$ and NO$_2$ records are missing on
+17--18\% of hours (\cref{sec:data}). A Bayesian network suits this setting:
+the dependencies among gases, sensors and weather form a directed graph, EM
+\citep{dempster1977em} learns from the partially observed references, and
+exact inference returns a posterior over each pollution level.
 
-We treat this as a probabilistic inference problem. The true pollutant
-concentration is a \emph{latent} quantity, and the sensors are noisy, indirect
-observations of it: each responds to several gases at once and to temperature
-and humidity. A co-located reference analyzer provides ground truth for
-training, but its record has frequent gaps; the CO, NO$_x$ and NO$_2$
-references are missing on 17--18\% of hours (\cref{sec:data}). A Bayesian
-network fits this setting: the dependencies among gases, sensors and weather
-form a directed graph, EM \citep{dempster1977em} learns from the partially
-observed references, and exact inference returns a posterior over each
-pollution level rather than a single number.
-
-\paragraph{Research questions.} Using only what a deployed device can observe
+\paragraph{Research questions.} Using only what a deployed device observes
 (hour, weather and its own sensors), never a reference reading:
-\begin{enumerate}[label=\textbf{Q\arabic*.}, leftmargin=*]
-  \item \textbf{Estimation.} Can a discrete BN learned with EM estimate the
-        true pollution level better than hour of day alone, and how close does
-        it come to the limit set by discretization?
-  \item \textbf{Shared structure.} The gases come from the same traffic, so they
-        rise and fall together. Does a latent emission regime capture that
-        co-movement, and does it improve the estimates?
-\end{enumerate}
+\textbf{Q1 (estimation):} can a discrete BN learned with EM estimate pollution
+better than the hour of day alone, and how close does it come to the limit set
+by discretization? \textbf{Q2 (shared structure):} the gases come from the
+same traffic and rise and fall together; does a latent emission regime capture
+that co-movement, and does it improve the estimates?
 
-\paragraph{Approach and findings.} We compare three models: an hour-of-day
-baseline; a single-gas network for CO (Phase~1); and our final model, which
-estimates CO, NO$_x$ and NO$_2$ jointly through a latent emission regime
-(Phase~3b). Its sensor edges, including cross-sensitivities, come from a
-separate study of which gases each sensor responds to (\cref{app:cross}).
-Intermediate models serve as ablations (\cref{sec:results}). On validation
-weeks (mean over three splits), the final model reduces concentration error
-relative to the baseline by 37\% for CO, 34\% for NO$_x$ and 16\% for NO$_2$,
-closing about 80\% of the gap to the floor set by three bins for CO and NO$_x$.
-The latent regime explains most of the gases' co-movement; it leaves CO and
-NO$_x$ estimates unchanged but lowers NO$_2$ error by about 14\%, the gas its
-own sensor reads worst.
-\todo{Replace with test-set numbers once final.}
+\paragraph{Approach and findings.} We compare an hour-of-day baseline, a
+single-gas network for CO (Phase~1) and our final model (Phase~3b), which
+estimates CO, NO$_x$ and NO$_2$ jointly through a latent regime, with sensor
+edges chosen by a cross-sensitivity study (\cref{app:cross}). On held-out test
+weeks the final model cuts the baseline's error by 37\% for CO, 32\% for
+NO$_x$ and 18\% for NO$_2$, closing 87\% and 71\% of the gap to the
+discretization floor for CO and NO$_x$ but only 39\% for NO$_2$. The regime
+explains most of the gases' co-movement but mainly improves NO$_2$.
