@@ -9,8 +9,10 @@ $H \in \{0,\dots,23\}$, a weekday indicator $D \in \{0,1\}$ (used only by the
 latent regime, \cref{sec:latent}), the weather $W = (T, \mathit{RH})$, the
 reference gases $G = (G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$
 and the sensors $S = (S_1, S_3, S_4, S_5)$. Every continuous variable is
-discretized into $K$ quantile bins fit on the training split (\cref{sec:data});
-$K = 3$ unless stated. The gases are partially observed in training and always
+discretized into $K$ quantile bins fit on the data the model is trained on
+(the training split for model selection, training plus validation for the
+final test run; \cref{sec:data}); $K = 3$ unless stated, with $K = 5$ as a
+sensitivity check. The gases are partially observed in training and always
 hidden at prediction time; $H$, $D$ and $W$ are always observed.
 
 \paragraph{Structure.} Without the latent regime, the network factorizes as
@@ -49,15 +51,15 @@ $\prod K_U$ has $(K_X - 1)\prod K_U$ free parameters. At $K = 3$,
   \includegraphics[width=0.6\linewidth]{phase-3b}
   \caption{Final network (Phase~3b). Solid edges: nominal sensor targets;
   dashed: cross-sensitivities selected from data; $R$ is the latent emission
-  regime (\cref{sec:latent}). The diamond is air quality, derived from the
-  estimated concentrations rather than modeled.}
+  regime (\cref{sec:latent}). The diamond is the concentration estimate
+  $\hat c$, computed from each gas's bin posterior rather than modeled
+  (\cref{sec:inference}).}
   \label{fig:network}
 \end{figure}
 
 
 \subsection{Latent Emission Regime}
 \label{sec:latent}
-\todo{Muska check this section}
 \Cref{eq:factorization} treats the three gases as independent given the hour,
 but they share one source, traffic, and still rise and fall together within a
 given hour (\cref{sec:results}). We therefore add a latent emission regime
@@ -97,7 +99,7 @@ reproducible solution, so we keep $R$ as the gases' only parent.
 17--18\% of hours (\cref{sec:data}), and the latent regime $R$ is missing on
 every hour. Because the reference gaps depend on the hour, which the model
 conditions on, rather than on the concentration itself, we treat them as
-missing at random.
+missing at random \citep{rubin1976inference}.
 
 \paragraph{EM.} Rather than imputing missing values, EM averages over them. In
 the E-step, each training hour contributes expected counts
@@ -116,26 +118,30 @@ smoothed counts on the hours where their family is fully observed; the latent
 regime $R$ starts from random tables drawn with a fixed seed. EM stops when an
 iteration improves $\mathcal{L}$ by less than a relative tolerance,
 $\mathcal{L}^{(s)} - \mathcal{L}^{(s-1)} < \epsilon\,\lvert \mathcal{L}^{(s-1)} \rvert$
-with $\epsilon = 10^{-4}$, or after 100 iterations. We record $\mathcal{L}$ at
-every iteration and check that it never decreases beyond round-off; a decrease
-would indicate an implementation error. Phase~1 converges in 3 iterations
-because CO is observed on 82\% of hours.
+with $\epsilon = 10^{-4}$, or after 100 iterations (200 for the latent-regime
+model). We record $\mathcal{L}$ at every iteration and check that it never
+decreases beyond round-off; a decrease would indicate an implementation error.
+Every run in this report is monotone and converges before the cap: Phase~1 in
+3 iterations, because CO is observed on 82\% of hours, and Phase~3b in at most
+57 during model selection and 9--14 in the final run.
 
 \paragraph{Stability of the latent regime.} With $R$ fully hidden, the
 objective has several local optima, and the same regimes can come out in a
-different order on each run (label switching). We run several restarts, match
-states across runs by their gas profiles, and accept a
-number of regimes $K_R$ only if the matched states agree across restarts. That
-way the regimes mean the same thing every time we fit and can be interpreted
-(\cref{sec:results}).
+different order on each run (label switching). We run five restarts and keep
+the one with the best training objective, match states across runs by their
+gas profiles, and accept a number of regimes $K_R$ only if the matched states
+agree across restarts. That way the regimes mean the same thing every time we
+fit and can be interpreted (\cref{sec:results}). The final test models use the
+same five restarts, selected by the objective on training plus validation,
+never on test.
 
 \subsection{Inference}
 \label{sec:inference}
 At prediction time the evidence is $e_t = (H, D, W, S)$; the reference gases
 are never evidence. With the latent regime the hidden variables of an hour are
 $(R, G_{\mathrm{CO}}, G_{\mathrm{NO_x}}, G_{\mathrm{NO_2}})$, only
-$K_R K^3 = 81$ joint states at $K = K_R = 3$, so we compute every posterior
-exactly by enumeration:
+$K_R K^3 = 81$ joint states at $K = K_R = 3$ (375 at $K = 5$), so we compute
+every posterior exactly by enumeration:
 \begin{equation}
   P(G_j \mid e_t) \propto \sum_{r} \sum_{g_{-j}}
   P(r \mid H, D) \prod_{k} P(g_k \mid r)
@@ -145,6 +151,7 @@ Without the regime, the sum over $r$ is replaced by $\prod_k P(g_k \mid H)$.
 The cost is linear in the number of hours, and the same sums give the E-step's
 expected counts. The concentration estimate is the posterior mean over bins,
 $\hat c_{j,t} = \sum_b P(G_j{=}b \mid e_t)\,\bar c_{j,b}$, where $\bar c_{j,b}$
-is the training mean of bin $b$. Because $\hat c_{j,t}$ can only mix the $K$
+is the mean concentration of the hours in bin $b$ of the data the model was
+fit on. Because $\hat c_{j,t}$ can only mix the $K$
 bin means, its error has a floor even with a perfect posterior; we report that
 resolution floor with every MAE (\cref{sec:results}).

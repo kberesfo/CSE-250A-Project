@@ -37,11 +37,13 @@ baseline; a single-gas network for CO (Phase~1); and our final model, which
 estimates CO, NO$_x$ and NO$_2$ jointly through a latent emission regime
 (Phase~3b). Its sensor edges, including cross-sensitivities, come from a
 separate study of which gases each sensor responds to (\cref{app:cross}).
-Intermediate models serve as ablations (\cref{sec:results}). On validation
-weeks (mean over three splits), the final model reduces concentration error
-relative to the baseline by 37\% for CO, 34\% for NO$_x$ and 16\% for NO$_2$,
-closing about 80\% of the gap to the floor set by three bins for CO and NO$_x$.
-The latent regime explains most of the gases' co-movement; it leaves CO and
-NO$_x$ estimates unchanged but lowers NO$_2$ error by about 14\%, the gas its
-own sensor reads worst.
-\todo{Replace with test-set numbers once final.}
+Intermediate models serve as ablations (\cref{sec:results}). On held-out test
+weeks (mean over three splits, models refit on training and validation data),
+the final model reduces concentration error relative to the baseline by 37\%
+for CO, 32\% for NO$_x$ and 18\% for NO$_2$. It closes 87\% of the gap to the
+floor set by three bins for CO and 71\% for NO$_x$, but only 39\% for NO$_2$,
+the gas its own sensor reads worst. On CO it matches the single-gas
+Phase~1 model while also estimating the other two gases. On validation, the
+latent regime explains most of the gases' co-movement within an hour; it
+leaves the CO and NO$_x$ estimates unchanged and lowers NO$_2$ error by about
+14\%.
