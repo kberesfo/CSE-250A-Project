@@ -1,30 +1,77 @@
 \section{Conclusion}
 \label{sec:conclusion}
 % ~0.5 page. No new results here; every claim points back to Sec. 4.
-
+%
 % Guidelines:
-%   - Summarize key findings and model performance (answer Q1--Q3 from Sec. 1).
+%   - Summarize key findings and model performance (answer Q1, Q2 from Sec. 1).
 %   - Limitations; potential extensions or improvements.
 %
 % Outline:
-% - Findings, one or two sentences per research question:
-%     Q1 Estimation: Phase 1 beats hour-of-day (acc 0.828 vs 0.591, MAE near
-%        the 3-bin floor); \todo{final per-gas result from the best phase}.
-%     Q2 Cross-sensitivity: S1, S3 explained by nominal gas alone; S4 responds
-%        more to CO than NO2; S5 acts as a general traffic sensor (CO + NOx);
-%        \todo{whether cross edges improved estimates}.
-%     Q3 Latent regime: K_R = 3 explains gas co-movement (within-regime corr
-%        ~0.05 vs ~0.54 within hour) and adds +0.39 nats/h over Phase 2;
-%        \todo{effect on accuracy / MAE}.
+% - Findings, one or two sentences per research question
+%   (use TEST numbers if reported; otherwise validation, and say so):
+%     Q1 Estimation: final model beats hour-of-day for every gas; MAE skill
+%        0.37 CO, 0.34 NOx, 0.16 NO2; closes ~80% of the gap to the 3-bin
+%        floor for CO and NOx, only ~33% for NO2 (its own sensor reads it
+%        worst). Matches Phase 1 on CO (0.54 mg/m^3) while staying calibrated
+%        and covering three gases.
+%     Q2 Shared structure: the regime explains most of the co-movement
+%        (within-regime corr ~0.05 vs ~0.54 within hour; ~0.39 when inferred
+%        from sensors only) and improves joint fit by +0.39 nats/h over the
+%        no-regime ablation (Phase 3a); per-gas error unchanged for CO and
+%        NOx, ~14% lower for NO2 (wide uncertainty).
+% - Build-up in one sentence: Phase 1 accurate but overconfident (shared
+%   sensor signal double-counted); nominal-only edges calibrated but lose CO
+%   accuracy; cross-sensitivity edges recover it; the regime adds joint
+%   structure.
 % - Limitations (one line each):
-%     sensors assumed independent given parents -> overconfident posteriors;
-%     hours independent (no temporal model); stationary CPTs (drift ignored);
-%     one device, one site, one year; C6H6 reference is a transform of S2;
-%     decisions made at 3 bins; MAR assumed for reference gaps.
+%     hours independent (no temporal model); stationary CPTs (seasonal drift
+%     ignored, year-round bin means overshoot in clean seasons);
+%     3 bins limit resolution (floor); one device, one site, one year;
+%     MAR assumed for reference gaps; K_R = 3 a flagged judgement call;
+%     C6H6 reference is a transform of S2, so benzene was excluded.
 % - Future work (one or two sentences):
 %     temporal model: regime as a Markov chain P(R_t | R_{t-1}), learned with
 %     Baum--Welch \citep{rabiner1989hmm} (planned, not completed);
-%     sensor--sensor or shared-interferent nodes to fix double counting;
-%     time-varying CPTs or a drift term.
+%     season -> gases or season-aware bin means for the seasonal signal
+%     found at K_R = 4; more bins with stronger priors to lower the floor.
 
-\todo{Findings, limitations, future work.}
+\subsection{Findings}
+
+\paragraph{Q1 (estimation).} On the test set, the final model (Phase~3b) beats the hour-of-day baseline on every gas, reducing
+concentration error (MAE) by 37\% for CO, 32\% for NO$_x$ and 18\%
+for NO$_2$ (\cref{sec:results}), and on CO it matches the single-gas network
+(Phase~1) with an MAE of 0.60~mg/m$^3$ while putting more probability on the true CO bin and covering three gases.
+For CO and NO$_x$, it closes 87\% and 71\% of the gap to the 3-bin resolution floor,
+which means the bins now limit accuracy; for NO$_2$, however, it closes only 39\% because its own sensor
+tracks CO more than NO$_2$.
+
+\paragraph{Q2 (shared structure).} On validation, the latent regime explains
+most of the co-movement between gases, lowering their mean rank correlation
+from 0.54 within an hour of day to 0.05 within a regime and to 0.39 when the
+regime is inferred from the sensors alone, and it improves the joint fit by
+0.39 nats per hour over the no-regime ablation (Phase~3a). 
+Per-gas error barely changes, apart from a 14\% drop for NO$_2$
+with wide uncertainty, because the sensors already pin down each gas; the
+regime fixes the relationships between gases, which per-gas metrics
+cannot see.
+
+Across the ablations, Phase~1 is accurate but overconfident because it
+double-counts the sensors' shared signal; nominal edges (Phase~2) are
+calibrated but lose CO accuracy; cross-sensitivity edges (Phase~3a) recover
+it; and the regime (Phase~3b) adds the joint structure.
+
+\subsection{Limitations} Hours are treated as independent, so there is no temporal
+model. CPTs are stationary, so seasonal drift is ignored and year-round bin
+means overshoot in clean seasons. The resolution floor at 3 bins bounds the
+achievable error. All data comes from one device at one site over one year.
+Reference gaps are assumed missing at random \citep{rubin1976inference}. The
+choice of $K_R = 3$ regimes is a judgement call since one seed narrowly misses our
+stability rule. Since C$_6$H$_6$ is a transform of $S_2$ and NMHC is about 90\%
+missing, both are excluded.
+
+\subsection{Future Work} The natural next step, which is planned but not completed, is
+a temporal regime using a Markov chain $P(R_t \given R_{t-1})$ learned with
+Baum--Welch \citep{rabiner1989hmm}, which would use the strong hour-to-hour
+dependence we observe. A season signal, either as a parent of the gases or through season-aware
+bin means, could capture the seasonal state that appears at $K_R = 4$, and
+more bins with stronger priors would lower the resolution floor.

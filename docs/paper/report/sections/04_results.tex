@@ -1,50 +1,149 @@
 \section{Results and Discussion}
 \label{sec:results}
-\section{Results and Discussion}
-\label{sec:results}
-% ~2.5 pages (gets the space freed by dropping the HMM).
-% Organize by research question; every number comes from
-% notebooks/<phase>/eval.ipynb -> results/<phase>/ and its [Exp] issue.
-% Report val for every comparison; test once, in the main table only.
+% ~2.5 pages. Organized by research question (Q1, Q2 from Sec. 1).
+% Test numbers: notebooks/final/eval.ipynb (results/final/test_summary.csv).
+% Val numbers: notebooks/<phase>/eval.ipynb. Mean +/- std over split seeds 0--2.
 
 \subsection{Experimental Setup}
-% ~0.25 page.
-% - Split: blocked by week, train/val/test; seeds (0,1,2 for the study).
-% - Metrics: accuracy (chance ~1/3 at 3 quantile bins), mean log-lik,
-%   macro-F1 / BER; concentration MAE/RMSE (mg/m^3) vs resolution floor.
-% - Baseline: hour-of-day only, same evidence interface.
-% - Configurations: Phase 1 (CO only), Phase 2 (3 gases + cross edges),
-%   Phase 3a (\todo), Phase 3b (latent regime, K_R in {2,3,4}); K = 3 vs 7 bins.
+\label{sec:setup}
+All numbers are mean $\pm$ standard deviation over three split seeds. Every
+choice is made on validation; the chosen models are then refit on training plus
+validation and scored once on test. The primary metric is the MAE of $\hat c$
+against the reference, in each gas's units, on hours with a reference reading.
+The \emph{resolution floor} is the MAE of a perfect bin prediction. Against the
+hour-of-day baseline $P(G_j \mid H)$, which sees the same evidence but reads
+only the hour, we report
+\begin{equation}
+  \text{skill} = 1 - \frac{\text{MAE}_\text{model}}{\text{MAE}_\text{hour}},
+  \qquad
+  \text{gap closed} =
+  \frac{\text{MAE}_\text{hour} - \text{MAE}_\text{model}}
+       {\text{MAE}_\text{hour} - \text{MAE}_\text{floor}},
+  \label{eq:skill}
+\end{equation}
+and the mean log-likelihood of the true bin (comparable only at equal bin
+counts). Results use 3 bins; 5 bins is a sensitivity check.
 
-\subsection{Quantitative Results}
-% ~1 page. One main table + 1 figure.
-% - Main table: rows = baseline, Phase 1, 2, 3a, 3b; cols = acc, LL, MAE,
-%   floor; per gas where it applies. (Test numbers here, once.)
-% - Q1: Phase 1 vs baseline: acc 0.828 vs 0.591 (+23.7 pp), LL -0.662 vs
-%   -0.854, MAE 0.556 vs floor 0.526 (val, n = 2064).
-% - Bins: 7 bins lowers accuracy (more classes) but MAE drops to 0.448;
-%   argue MAE is the fair comparison across bin counts.
-% - Q2: Phase 2 vs Phase 1 per gas \todo; does adding cross edges help NO2?
-% - Q3: Phase 3b vs Phase 2: +0.39 nats/h val LL; \todo accuracy / MAE.
-% - Figure: val LL or MAE by phase, or model-selection plot over K_R.
+\subsection{Q1: Estimation}
+\label{sec:q1}
 
-\subsection{Qualitative Analysis}
-% ~0.75 page.
-% - CPTs match intuition: P(CO | hour) shows rush hours / night lows.
-% - Cross-sensitivity: S4 tracks CO more than nominal NO2 -> NO2 hardest gas;
-%   high raw corr edges rejected (S1<-C6H6, S5<-NO2) = shared traffic signal.
-% - Latent regime: states by hour/weekday (posterior_by_hour figure);
-%   B1 check: within-regime gas corr ~0.05 vs ~0.54 within hour
-%   (\todo confirm sensors-only number).
-% - Failure modes: overconfidence from double-counted sensors (drop-one
-%   ablation); C6H6 is a re-reading of S2; drift ignored.
+\begin{table}[t]
+  \centering
+  \caption{Test results at 3 bins, models refit on training and validation
+  data; mean $\pm$ std over three split seeds. Skill and gap closed are
+  relative to the hour baseline (\cref{eq:skill}). Phase~1 estimates CO only.}
+  \label{tab:test}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{llccccc}
+    \toprule
+    Gas & Model & MAE & Floor & Skill & Gap closed & Log-lik \\
+    \midrule
+    CO (mg/m$^3$) & Hour only & $0.945 \pm 0.030$ & $0.549$ & -- & -- & $-0.905$ \\
+     & Phase~1 & $0.604 \pm 0.047$ & $0.549$ & $0.36 \pm 0.03$ & $0.86 \pm 0.07$ & $-0.657$ \\
+     & Phase~3b & $0.601 \pm 0.047$ & $0.549$ & $0.37 \pm 0.03$ & $0.87 \pm 0.07$ & $-0.569$ \\
+    \midrule
+    NO$_x$ (ppb) & Hour only & $146.5 \pm 14.1$ & $80.3$ & -- & -- & $-0.991$ \\
+     & Phase~3b & $99.9 \pm 12.8$ & $80.3$ & $0.32 \pm 0.03$ & $0.71 \pm 0.05$ & $-0.672$ \\
+    \midrule
+    NO$_2$ ($\mu$g/m$^3$) & Hour only & $31.3 \pm 1.5$ & $16.7$ & -- & -- & $-0.926$ \\
+     & Phase~3b & $25.6 \pm 1.2$ & $16.7$ & $0.18 \pm 0.01$ & $0.39 \pm 0.01$ & $-0.748$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+On held-out test weeks (\cref{tab:test}) the final model beats the hour of day
+on every gas, removing 37\%, 32\% and 18\% of the baseline's CO, NO$_x$ and
+NO$_2$ error and placing more probability on the true bin. It closes 87\% of
+the gap to the floor for CO and 71\% for NO$_x$, so for these gases most of the
+remaining error comes from the coarse bins, not the model. NO$_2$ closes only
+39\%: its limit is the evidence, since its only nominal sensor responds more to
+CO (\cref{sec:learned}). These skills match validation (0.37, 0.34, 0.16);
+raw MAEs are higher on test because the floor is too (CO 0.549 vs 0.461).
+
+On CO the final model matches Phase~1 (0.601 vs 0.604~mg/m$^3$, within seed
+noise) while also estimating NO$_x$ and NO$_2$, and its posterior is sharper
+(log-likelihood $-0.569$ vs $-0.657$). Phase~1 lets every sensor witness CO
+directly, which double-counts shared evidence: removing $S_1$ or $S_5$ from its
+evidence \emph{raises} validation log-likelihood in every seed.
+
+Five bins lower every MAE (test CO $0.601 \to 0.521$, NO$_x$ $99.9 \to 82.5$,
+NO$_2$ $25.6 \to 23.3$), but the floor drops faster (CO $0.549 \to 0.366$), so
+the gap closed falls (CO 0.87 to 0.73): finer bins raise the ceiling but leave
+fewer training hours per CPT row (\cref{fig:test-mae} in \cref{app:test}).
+
+\subsection{Q2: Shared Structure}
+\label{sec:q2}
+
+On validation, each addition to the network buys something (\cref{tab:ladder} in \cref{app:networks}). Tying each sensor only to
+its nominal gas (Phase~2) loses CO accuracy, because the other sensors also
+carry CO information; the cross-sensitivity edges (Phase~3a) recover it,
+lowering MAE relative to Phase~2 by 9.2\%, 6.1\% and 3.4\% for CO, NO$_x$ and
+NO$_2$. The latent regime (Phase~3b) then improves the \emph{joint} fit:
+validation log-likelihood rises by 0.39 nats per hour over Phase~3a
+($+0.29$/$+0.41$/$+0.46$ per seed) with fewer parameters.
+
+The gain comes from where Phase~3a's assumption fails (\cref{fig:b1}): within
+a single hour the gases still have a mean rank correlation of 0.54 (0.66
+overall), but within a regime only 0.05, and 0.39 when the regime is inferred
+from the sensors alone; NO$_x$--NO$_2$ keeps 0.22, as NO$_2$ is part of NO$_x$.
+Per-gas error changes much less: relative to Phase~3a, CO and NO$_x$ MAE are
+unchanged ($0.003 \pm 0.030$ and $0.016 \pm 0.052$ in skill) and NO$_2$ falls
+by about 14\% ($0.137 \pm 0.082$). The sensors already pin down CO and NO$_x$
+hour by hour, so the regime mainly helps the gas they read worst; its main
+effect is on the relationships \emph{between} gases, which a per-gas error
+cannot see.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{phase3b/b1_check}
+    \caption{Gas--gas rank correlation.}
+    \label{fig:b1}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{phase3b/p_event_given_hour_weekday}
+    \caption{Learned $P(R \mid H, D)$.}
+    \label{fig:regimes}
+  \end{subfigure}
+  \caption{The latent regime (validation). (a) Conditioning on the regime
+  removes most of the co-movement the hour leaves. (b) The regimes follow the
+  traffic day: quiet early morning, moderate evenings and weekends, busy at the
+  weekday commuter peaks.}
+  \label{fig:latent}
+\end{figure}
+
+\subsection{What the Model Learned}
+\label{sec:learned}
+The three regimes are consistent across seeds (at most 0.08 apart in any
+$P(G_j \mid R)$) and interpretable (\cref{fig:regimes}): \emph{quiet} puts every
+gas in its lowest bin and dominates 02:00--05:00 on weekdays, \emph{moderate}
+covers late evenings and much of the weekend, and \emph{busy} peaks on weekdays
+at 08:00--10:00 and 17:00--20:00. The model was never told about commuting.
+The cross-sensitivity study (\cref{app:cross}) explains the NO$_2$ result:
+$S_4$, nominally an NO$_2$ sensor, tracks CO more strongly than NO$_2$.
+
+The main failure modes come from the discretization and the static CPTs.
+Because $\hat c$ mixes bin means, it caps peaks at the top bin's training mean
+and overshoots in clean weeks (\cref{app:trace}). One set of CPTs covers the
+year: trained on March--September 2004 and scored on the following autumn
+(5 bins), Phase~2's CO MAE rises from 0.54 to 0.81~mg/m$^3$ and NO$_x$ error
+more than doubles (87 to 214~ppb) as winter levels exceed the training bins;
+the floor also rises (CO 0.32 to 0.52), so part of the loss is resolution. The fourth regime at $K_R = 4$ is seasonal,
+which points the same way.
 
 \subsection{Convergence and Stability}
-% ~0.5 page.
-% - EM objective monotone in every run; Phase 1 converges in 3 iterations
-%   (CO observed 82% of hours).
-% - Phase 3b: local optima + label switching; restarts matched by Hungarian;
-%   K_R = 3 stable, K_R = 4 not identifiable across restarts; K_R = 2 is
-%   the strict alternative. Stability is an interpretability criterion,
-%   not a fit criterion.
-% - Scalability: exact
+\label{sec:stability}
+Every EM run is monotone and converges before its cap: Phase~1 in 3
+iterations (CO is observed on 82\% of hours), Phase~3b in at most 57 during
+selection and 9--14 in the final run. Validation log-likelihood keeps rising
+with $K_R$ ($+0.14$ nats per hour from 2 to 3, $+0.03$ from 3 to 4), but the
+fourth regime differs between restarts (state profiles up to 0.60 apart), and
+models that keep hour $\to$ gas edges are never reproducible. $K_R = 3$ agrees
+within 0.09 in two seeds and 0.15 in the third, which a 20-restart check shows
+is the same solution reached imperfectly; we keep it as a flagged judgement
+call, with $K_R = 2$ as the strict alternative. Inference stays exact and
+linear in the number of hours, but its cost grows as $K^{\#\text{gases}}$
+(81 joint states at 3 bins, 375 at 5).

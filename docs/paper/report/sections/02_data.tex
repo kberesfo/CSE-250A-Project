@@ -1,19 +1,44 @@
 \section{Data Sourcing and Processing}
 \label{sec:data}
-% ~1 page. Start from the proposal's Dataset section.
-%
-% - Source: UCI Air Quality \citep{vito2008airquality, devito2008calibration};
-%   9,357 hours, Mar 2004--Feb 2005, one roadside device.
-% - Variables table: kept / dropped / role (input, partially observed, observed).
-% - Missing data: -200 -> NaN; fraction missing per column (CO 18%,
-%   NOx/NO2 17.5%, NMHC 90%); reference gaps handled by EM, hours with missing
-%   weather dropped (366) because inputs have no CPT.
-% - Feature selection (cite App. cross-sensitivity study):
-%     NMHC dropped (90% missing); C6H6 dropped (deterministic function of S2);
-%     S2 dropped (no remaining gas parent); W = T + RH.
-% - Discretization: quantile bins fit on train; K = 3 default; bin count
-%   compared in Sec. 4 (3 vs 7).
-% - CHANGED from proposal: split is blocked by week (weeks shuffled into
-%   train/val/test), not one time cut; val for every choice, test once.
-%   Say why: neighbouring hours are near-duplicates.
-% - Limitations: one device, one site, one year; drift not modeled.
+
+\paragraph{Source.} We use the UCI Air Quality dataset
+\citep{vito2008airquality, devito2008calibration}: 9,357 hourly averages
+(March 2004 to April 2005) from one road-level device in an Italian city, with
+five metal-oxide sensors ($S_1$--$S_5$), temperature, relative and absolute
+humidity, and reference CO, NMHC, C$_6$H$_6$, NO$_x$ and NO$_2$ from a
+co-located analyzer. \Cref{tab:variables} (\cref{app:variables}) lists every
+variable, its role and whether we keep it.
+
+\paragraph{Missing data.} Missing readings ($-200$ in the raw file) are
+recoded as missing. Sensors and weather drop out together during device
+outages on 3.9\% of hours; we drop those 366 hours (8,991 remain), since
+inputs have no CPT and cannot be inferred. The references are missing far more
+often (CO 18.0\%, NO$_x$ and NO$_2$ 17.5\%), in two patterns: a nightly
+dropout, consistent with scheduled calibration (93\% of 3\,AM NO$_x$ and
+NO$_2$ readings, \cref{fig:missing-hour}), and multi-day analyzer outages,
+which hold 77--84\% of the missing hours. The first depends on the hour, which
+the model conditions on, and during the second the sensors read much as usual,
+so we treat the gaps as missing at random given the observed variables
+\citep{rubin1976inference}; EM uses every retained hour.
+
+\paragraph{Variable selection.} NMHC is observed on only 914 hours, almost all
+in spring 2004, so it is dropped. C$_6$H$_6$ is an almost exact function of
+$S_2$ (cubic fit $R^2 \approx 0.99998$) and carries no information beyond it
+(\cref{app:cross}), so it is dropped too, and with it $S_2$, which has no gas
+parent left. Weather is $W = (T, \mathit{RH})$; absolute humidity is mostly
+determined by the two and would triple every sensor CPT.
+
+\paragraph{Discretization and splits.} Gases, sensors, T and RH are cut into
+$K$ quantile bins fit on the training data only ($K = 3$ by default, $K = 5$
+as a check); each gas bin keeps the mean concentration of its training hours,
+which turns a posterior back into a concentration. Instead of the proposal's
+single chronological split, we cut the hours into 7-day blocks, shuffle them
+and assign them 50/25/25 to training, validation and test, for three seeds.
+Neighbouring hours are near-duplicates (residual lag-1 autocorrelation
+0.68--0.88), so whole weeks keep copies of test hours out of training while
+covering the whole year. Validation makes every choice; test is scored once.
+
+\paragraph{Limitations.} One device, one site and one year: held-out weeks
+measure interpolation within that year, not transfer, and the reference is
+treated as ground truth. Drift is not modeled; on a chronological split the
+error grows on later months (\cref{sec:learned}).

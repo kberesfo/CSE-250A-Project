@@ -23,24 +23,28 @@
 % - Scope the reach goal early (the HMM); the core model took longer than planned.
 % - Fix the variable vocabulary and model interface first; it made every
 %   later phase a few lines of notebook.
-\todo{Advice.}
+Check whether a ``ground truth'' column is itself derived from a sensor
+before building on it (C$_6$H$_6$ was a transform of $S_2$). Split by blocks of
+time, not random hours, since neighbouring hours leak. With a latent variable,
+judge the number of states by restart stability, not likelihood alone. Scope
+the reach goal early: the temporal model was planned but not reached.
 
 
 \subsection*{Contributions and Reflections}
 
-\subsubsection*{Kiernan Beresford}
+\paragraph{Kiernan Beresford.}
 \input{sections/contributions/beresford}
 
-\subsubsection*{Agnes Tang}
+\paragraph{Agnes Tang.}
 \input{sections/contributions/tang}
 
-\subsubsection*{Zachary Brown}
+\paragraph{Zachary Brown.}
 \input{sections/contributions/brown}
 
-\subsubsection*{Muska Mesdaq}
+\paragraph{Muska Mesdaq.}
 \input{sections/contributions/mesdaq}
 
-\subsubsection*{Joyce Yang}
+\paragraph{Joyce Yang.}
 \input{sections/contributions/yang}
 
 \subsection*{Use of Generative AI}
@@ -49,5 +53,6 @@
 % running and checking experiments); how outputs were verified (tests, reruns,
 % review in PRs). Pull per-PR notes with the gh command above.
 
-Claude Opus 5.5 was used for code reivew, generate unit tests, editing markdown
-reviewer, and outliner. It was \emph{not} used for design decisions or running experiments.
+Claude (Anthropic) was used for code review, generating unit tests, and
+outlining and condensing our notebook text and this report to fit the page
+limit. It was \emph{not} used for design decisions or running experiments.

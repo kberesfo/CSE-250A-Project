@@ -15,7 +15,7 @@
 # anything in src/, or an earlier phase changes. Notebooks run one at a time,
 # phase1 → phase2 → phase3a → phase3b, because later phases read earlier results.
 
-NOTEBOOKS := $(sort $(wildcard notebooks/phase*/*.ipynb notebooks/studies/*.ipynb))
+NOTEBOOKS := $(sort $(wildcard notebooks/phase*/*.ipynb notebooks/studies/*.ipynb notebooks/final/*.ipynb))
 REPORTS   := $(patsubst notebooks/%.ipynb,results/%.html,$(NOTEBOOKS))
 GROUPS    := $(sort $(notdir $(patsubst %/,%,$(dir $(NOTEBOOKS)))))
 SRC       := $(shell find src -name '*.py')
@@ -52,6 +52,8 @@ results/%.html: notebooks/%.ipynb $(SRC)
 results/phase2/eval.html: results/phase1/eval.html
 results/phase3a/eval.html: results/phase2/eval.html
 results/phase3b/eval.html: results/phase3a/eval.html
+# the final test run goes last (order only: it reads nothing from the phases)
+results/final/eval.html: | results/phase3b/eval.html
 
 # one page linking every report: open results/index.html in a browser
 results/index.html: $(REPORTS)
