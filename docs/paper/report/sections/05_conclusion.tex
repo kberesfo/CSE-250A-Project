@@ -49,12 +49,22 @@ over the no-regime ablation (Phase~3a) (\cref{sec:q2}).
 Per-gas error barely changes; the regime fixes the relationships between gases, which per-gas metrics
 cannot see.
 
-Phase~1 is accurate but overconfident because it
-double-counts the sensors' shared signal. Nominal edges (Phase~2) lose CO accuracy
-because each gas sees only its own sensor, cross-sensitivity edges (Phase~3a) recover
-it, and the regime (Phase~3b) adds the joint structure. Each phase's independence assumptions 
-are only approximately true, yet they keep the network small enough to learn from
-one year of data, and the final network still improves on the hour of day for every gas.
+\paragraph{Chain of experiments.} Each phase changed one modeling choice and kept the rest fixed. Phase~1, a single CO
+network with every sensor as its child, is accurate but overconfident because it
+double-counts the sensors' shared signal. Phase~2 adds NO$_x$ and NO$_2$ and ties each
+sensor only to its own gas, so CO loses accuracy with only one sensor to read.
+Phase~3a adds the cross-sensitivity edges chosen by our sensor study (\cref{app:cross}) and recovers
+it, and Phase~3b adds the latent regime, which captures the joint structure between gases.
+Each phase's independence assumptions are only approximately true, yet they keep the network 
+small enough to learn from one year of data, and the final network still improves on the 
+hour of day for every gas.
+
+\paragraph{Usefulness.} The network returns a posterior over each gas's level, which we turn into a concentration
+in real units, so a deployed device that sees only the hour, weather and its own sensors
+can report CO, NO$_x$ and NO$_2$ estimates with their uncertainty. A reference analyzer is
+needed only for training, and for CO and NO$_x$ the estimates already come close
+to the limit the bins allow, which makes the model a practical way to
+calibrate low-cost sensors where reference stations are too expensive.
 
 \paragraph{Limitations.} Hours are treated as independent and the CPTs are stationary;
 seasonal drift is a real cost. On a chronological split, Phase~2's
