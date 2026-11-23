@@ -69,9 +69,9 @@ choice of $K_R = 3$ regimes is a judgement call since one seed narrowly misses o
 stability rule. Since C$_6$H$_6$ is a transform of $S_2$ and NMHC is about 90\%
 missing, both are excluded.
 
-\subsection{Future Work} The natural next step, which is planned but not completed, is
-a temporal regime using a Markov chain $P(R_t \given R_{t-1})$ learned with
-Baum--Welch \citep{rabiner1989hmm}, which would use the strong hour-to-hour
-dependence we observe. A season signal, either as a parent of the gases or through season-aware
-bin means, could capture the seasonal state that appears at $K_R = 4$, and
-more bins with stronger priors would lower the resolution floor.
+\paragraph{Future work.} The natural next step is a temporal regime, a Markov
+chain $P(R_t \given R_{t-1})$ learned with Baum--Welch \citep{rabiner1989hmm},
+which would use the strong hour-to-hour dependence we observe. A season signal, 
+either as a parent of the gases or through season-aware bin means, could 
+capture the seasonal state that appears at $K_R = 4$, and more bins with 
+stronger priors would lower the resolution floor.
