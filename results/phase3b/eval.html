@@ -7815,15 +7815,15 @@ W = T + RH  →  every sensor
 <ul>
 <li><strong>B1.</strong> Given Event, the gases are independent of each other, and independent of hour (Event-only version).</li>
 <li><strong>B2.</strong> Event depends only on hour and day type.</li>
-<li><strong>B3.</strong> Hours are independent given the CPTs. Event isn't chained across hours; that is Phase 4.</li>
-<li>Plus Phase 2's sensor assumptions, and missing-at-random given the inputs.</li>
+<li><strong>B3.</strong> Hours are independent given the CPTs. Event isn't chained across hours; modeling that is future work.</li>
+<li>Plus Phase 3a's sensor assumptions, and missing-at-random given the inputs.</li>
 </ul>
 <p><strong>What this notebook covers</strong></p>
 <ol>
-<li>Setup, with the sensor edges from offical network</li>
+<li>Setup, with the sensor edges from the official network</li>
 <li>A vectorized BN for the grid (LayeredBN)</li>
 <li>The grid: K ∈ {2, 3, 4} × {Event-only, Event + hour} × {is_weekday, dow} × 5 EM restarts × 3 split seeds</li>
-<li>Choosing K: validation log-likelihood, vs Phase 2, and stability across restarts</li>
+<li>Choosing K: validation log-likelihood, vs the no-regime network (Phase 3a's structure), and stability across restarts</li>
 <li>EM convergence</li>
 <li>What the Event states mean: P(gas | Event), P(Event | hour, weekday) and the posterior by hour</li>
 <li>The B1 check: do the gases stop co-moving once Event is known?</li>
@@ -8114,9 +8114,9 @@ W = T + RH  →  every sensor
 <li>Keep the restart with the best <strong>train</strong> objective, and record every restart's objective.</li>
 <li>Score the kept model on <strong>val</strong>: log-likelihood of the observed cells per hour, conditional on the inputs (hour, day, T, RH).</li>
 </ul>
-<p>Phase 2 is fitted on the same splits, bins and sensor edges for comparison.</p>
+<p>The no-regime network (Phase 3a's structure, labeled phase2 in the code) is fitted on the same splits, bins and sensor edges for comparison.</p>
 <p><strong>Stability.</strong> For every (K, parents, seed) we also compare each restart's P(gas | Event) with the best restart's, after matching up the state labels (Hungarian algorithm). A restart "agrees" if no probability differs by 0.1 or more.</p>
-<p>With <code>RERUN_GRID = False</code> the cell loads the saved results from <code>notebooks/experiments/</code>.</p>
+<p>Unless RERUN=true (or make rerun), the cell loads the saved grid from results/phase3b/ if it exists.</p>
 </div>
 </div>
 </div>
@@ -8219,7 +8219,253 @@ W = T + RH  →  every sensor
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>183 fits | all EM runs monotone: True | converged: 100% | iterations: median 20, max 57
+<pre>seed 0  K=2  event       is_weekday  done (3s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event       dow         done (6s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event+hour  is_weekday  done (10s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=2  event+hour  dow         done (14s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event       is_weekday  done (17s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event       dow         done (21s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event+hour  is_weekday  done (26s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=3  event+hour  dow         done (31s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event       is_weekday  done (39s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event       dow         done (46s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event+hour  is_weekday  done (52s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 0  K=4  event+hour  dow         done (57s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event       is_weekday  done (60s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event       dow         done (63s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event+hour  is_weekday  done (67s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=2  event+hour  dow         done (70s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event       is_weekday  done (74s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event       dow         done (78s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event+hour  is_weekday  done (83s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=3  event+hour  dow         done (88s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event       is_weekday  done (94s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event       dow         done (99s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event+hour  is_weekday  done (105s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 1  K=4  event+hour  dow         done (110s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event       is_weekday  done (113s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event       dow         done (116s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event+hour  is_weekday  done (119s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=2  event+hour  dow         done (123s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event       is_weekday  done (126s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event       dow         done (130s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event+hour  is_weekday  done (135s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=3  event+hour  dow         done (140s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event       is_weekday  done (147s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event       dow         done (152s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event+hour  is_weekday  done (159s)
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>seed 2  K=4  event+hour  dow         done (164s)
+183 fits | all EM runs monotone: True | converged: 100% | iterations: median 20, max 57
 </pre>
 </div>
 </div>
@@ -8696,7 +8942,7 @@ W = T + RH  →  every sensor
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><strong>Explanation:</strong></p>
 <ul>
-<li><strong>Every Event model fits better than Phase 2.</strong> K = 3 Event-only gains <strong>+0.39 nats per hour</strong> on validation (+0.29 / +0.41 / +0.46 per seed), with fewer parameters (870 vs 900). Phase 2 needs 24 × 2 free parameters per gas, while Event-only needs K × 2 per gas plus one P(Event | hour, weekday) table. The gain comes from Phase 2's assumption A1 (gases independent given hour) being wrong: knowing one gas tells you a lot about the others, and Event carries exactly that shared information.</li>
+<li><strong>Every Event model fits better than the no-regime network.</strong> K = 3 Event-only gains <strong>+0.39 nats per hour</strong> on validation (+0.29 / +0.41 / +0.46 per seed), with fewer parameters (870 vs 900). The no-regime network needs 24 × 2 free parameters per gas, while Event-only needs K × 2 per gas plus one P(Event | hour, weekday) table. The gain comes from the no-regime network's assumption A1 (gases independent given hour) being wrong: knowing one gas tells you a lot about the others, and Event carries exactly that shared information.</li>
 <li><strong>Validation log-likelihood keeps rising with K, but more and more slowly.</strong> K = 3 vs 2 is +0.14 per hour, and K = 4 vs 3 is +0.03, both positive in every seed. Event + hour adds +0.02 at K = 3 and nothing at K = 4.</li>
 <li><strong>Stability separates the options.</strong> Event-only K = 2 reaches the same solution from every restart (largest difference ≈ 0.02–0.04). <strong>Event + hour is never reproducible</strong> (≈ 0.93 for every K): when hour also feeds the gases directly, many different Event solutions explain the data equally well, so the states carry no stable meaning. Event-only K = 4 is not reproducible either (0.30–0.42 in two of three seeds). <strong>Event-only K = 3 is in between:</strong> restarts agree within 0.08–0.09 in seeds 1 and 2, but differ by up to 0.15 in seed 0. Section 4b looks at that seed more closely.</li>
 <li><strong>Day variable.</strong> Day of week adds +0.002 ± 0.007 per hour over weekday/weekend at K = 3, which is noise, while the Event table is 3.5× larger.</li>
@@ -9316,7 +9562,7 @@ share of hours (val posterior): {'quiet (night / weekend)': 0.283, 'moderate (da
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="7.-The-B1-check:-do-the-gases-stop-co-moving-once-Event-is-known?">7. The B1 check: do the gases stop co-moving once Event is known?<a class="anchor-link" href="#7.-The-B1-check:-do-the-gases-stop-co-moving-once-Event-is-known?">¶</a></h2><p>Phase 2 assumed A1: gases are independent given hour. B1 says they are independent given Event. We measure the rank correlation for each of the 3 gas pairs on the validation hours where <strong>both</strong> gases of the pair are observed (<code>n</code> per pair), in four ways:</p>
+<h2 id="7.-The-B1-check:-do-the-gases-stop-co-moving-once-Event-is-known?">7. The B1 check: do the gases stop co-moving once Event is known?<a class="anchor-link" href="#7.-The-B1-check:-do-the-gases-stop-co-moving-once-Event-is-known?">¶</a></h2><p>The no-regime network assumes A1: gases are independent given hour. B1 says they are independent given Event. We measure the rank correlation for each of the 3 gas pairs on the validation hours where <strong>both</strong> gases of the pair are observed (<code>n</code> per pair), in four ways:</p>
 <ul>
 <li><strong>raw</strong>: no conditioning</li>
 <li><strong>within hour</strong>: Spearman within each hour of day, averaged (what A1 claims is 0)</li>
@@ -9591,7 +9837,7 @@ state 3  1.81  1.82  1.86
 <li>One middle state has CO at a medium level but <strong>low NOx and NO2</strong>. It covers ≈ 36% of hours in August (likely the <em>Ferragosto</em> holidays, when Italian city traffic drops) and ~20–30% from March to July, but little from September to March (≈ 2–12%).</li>
 <li>In autumn and winter the top state takes over instead, at ≈ 30–60% of hours from September 2004 to March 2005. That fits winter conditions: heating emissions, and cold, stable air that traps pollution near the ground.</li>
 </ul>
-<p>So the extra "event" the model finds is seasonal, not a traffic pattern. Phase 4 (HMM) or a season input would be the right way to model it.</p>
+<p>So the extra "event" the model finds is seasonal, not a traffic pattern. A temporal model (e.g. an HMM) or a season input would be the right way to model it.</p>
 <p><strong>Why we don't keep K = 4:</strong> its solution isn't reproducible (section 4b). The 4th state lands somewhere different across restarts (P(gas | Event) differs by up to 0.42 across the grid's restarts and 0.60 with 20 restarts, after aligning labels), and some restarts end up to ≈ 170 nats below the best. The seasonal story above is the best restart's story, but another run of EM could tell a different one. That is the label-switching / local-optima problem the issue anticipated, so we report K = 3 and use this section to discuss what extra states pick up.</p>
 </div>
 </div>
@@ -9742,7 +9988,7 @@ state 3  1.81  1.82  1.86
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><strong>Explanation:</strong> telling Event the season improves validation fit <strong>on average but not reliably</strong> (+0.03 ± 0.09 nats per hour at K = 3, +0.08 ± 0.09 at K = 4; the spread across seeds is as large as the gain). It also <strong>breaks reproducibility</strong>: with season as a parent, restarts disagree by up to 0.25 (K = 3) and 0.90 (K = 4). A season parent lets EM trade off "which season" against "which state", so the states stop having one meaning.</p>
-<p><strong>For the report's follow-on research:</strong> the K = 4 result shows there is a seasonal signal, but a season parent on the hourly Event is not a good way to capture it. Better options are season → gases directly (a slow baseline level that Event varies around), or a slowly changing state, which is Phase 4 (HMM). Either keeps Event as the hourly traffic regime and lets something else carry the season.</p>
+<p><strong>For the report's follow-on research:</strong> the K = 4 result shows there is a seasonal signal, but a season parent on the hourly Event is not a good way to capture it. Better options are season → gases directly (a slow baseline level that Event varies around), or a slowly changing state, such as an HMM over Event. Either keeps Event as the hourly traffic regime and lets something else carry the season.</p>
 </div>
 </div>
 </div>
@@ -9753,7 +9999,7 @@ state 3  1.81  1.82  1.86
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="9.-Summary-for-the-report">9. Summary for the report<a class="anchor-link" href="#9.-Summary-for-the-report">¶</a></h2><p><strong>Network.</strong> This is the group's final network: CO, NOx and NO2, with S1 ← CO, S3 ← NOx, S4 ← NO2 + CO + NOx, S5 ← CO + NOx, and T + RH on every sensor. On top of it sits a latent Event with K = 3 states, with parents (hour, weekday) and the three gases as its children (Event-only).</p>
+<h2 id="9.-Summary-for-the-report">9. Summary for the report<a class="anchor-link" href="#9.-Summary-for-the-report">¶</a></h2><p><strong>Network.</strong> This is the group's final network: CO, NOx and NO2, with S1 ← CO, S3 ← NOx, S4 ← NO2 + CO + NOx, S5 ← CO + NOx, and T + RH on every sensor. On top of it sits a latent Event with K = 3 states, with parents (hour, weekday) and the three gases as its children (Event-only). Without Event (hour → each gas) this is the Phase 3a network, which is refit here on the same splits as the no-regime comparison.</p>
 <p><strong>Choice.</strong></p>
 <ul>
 <li>Configurations were compared on validation log-likelihood, among those whose EM solution is reproducible across restarts.</li>
@@ -9772,7 +10018,7 @@ state 3  1.81  1.82  1.86
 <tbody>
 <tr>
 <td>Fit</td>
-<td>+0.39 nats per hour on validation over Phase 2 (same rows, same evidence; +0.29 / +0.41 / +0.46 per seed), with fewer parameters (870 vs 900). Every EM run is monotone and converges in ≤ 57 iterations.</td>
+<td>+0.39 nats per hour on validation over the no-regime network (Phase 3a's structure; same rows, same evidence; +0.29 / +0.41 / +0.46 per seed), with fewer parameters (870 vs 900). Every EM run is monotone and converges in ≤ 57 iterations.</td>
 </tr>
 <tr>
 <td>States</td>
@@ -9780,7 +10026,11 @@ state 3  1.81  1.82  1.86
 </tr>
 <tr>
 <td>B1</td>
-<td>Mean gas–gas correlation: ≈ 0.66 raw, ≈ 0.54 within hour (A1 fails), ≈ 0.05 within Event, and ≈ 0.39 when Event is inferred from sensors only. NOx–NO2 keeps ≈ 0.22.</td>
+<td>Mean gas–gas correlation: ≈ 0.66 raw, ≈ 0.54 within hour (the no-regime network's assumption fails), ≈ 0.05 within Event, and ≈ 0.39 when Event is inferred from sensors only. NOx–NO2 keeps ≈ 0.22.</td>
+</tr>
+<tr>
+<td>Concentration (section 10)</td>
+<td>Vs the hour baseline at 3 bins, MAE skill 0.367 (CO), 0.338 (NOx), 0.160 (NO2); at 5 bins 0.425, 0.446, 0.217. Vs Phase 3a, per-gas MAE is unchanged for CO (0.003 ± 0.030) and NOx (0.016 ± 0.052) and about 14% lower for NO2 (0.137 ± 0.082, wide spread). The regime mainly improves the <em>joint</em> fit (B1), not each gas on its own.</td>
 </tr>
 <tr>
 <td>"Some event"</td>
@@ -9792,9 +10042,10 @@ state 3  1.81  1.82  1.86
 <ul>
 <li>EM finds local optima, so we use restarts and keep the best train objective. K = 3's restarts differ by up to ≈ 0.15 in one seed.</li>
 <li>State labels are arbitrary, so we sort them by CO level and match them with the Hungarian algorithm.</li>
-<li>Event can't capture slow, multi-day changes (season, holidays), because it is re-drawn independently every hour (B3). That is Phase 4's job.</li>
+<li>Event can't capture slow, multi-day changes (season, holidays), because it is re-drawn independently every hour (B3). A temporal model (e.g. an HMM over Event) is future work.</li>
 <li>B1 still leaves NOx–NO2 dependence, since NO2 is part of NOx.</li>
 <li>Event + hour fits slightly better, but its states aren't identifiable.</li>
+<li>Sections 1–9 use 3 bins. Section 10 adds 5 bins for the concentration evaluation.</li>
 </ul>
 <p><strong>Decisions</strong> (recorded in <code>docs/decisions.md</code>): K = 3, Event-only, is_weekday, on the final network.</p>
 </div>
@@ -9909,21 +10160,21 @@ state 3  1.81  1.82  1.86
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=0: 22s
+<pre>bins=5 seed=0: 16s
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=1: 22s
+<pre>bins=5 seed=1: 17s
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=2: 19s
+<pre>bins=5 seed=2: 14s
 </pre>
 </div>
 </div>
@@ -10270,10 +10521,10 @@ state 3  1.81  1.82  1.86
 <h3 id="Summary-Report">Summary Report<a class="anchor-link" href="#Summary-Report">¶</a></h3><h4 id="Interpretations">Interpretations<a class="anchor-link" href="#Interpretations">¶</a></h4><ul>
 <li>Phase 3b's BN removes about 37% of the hour only baseline's MAE for CO (0.367 ± 0.064), about 16% for NO2 (0.160 ± 0.078), and about 34% for NOx (0.338 ± 0.034)</li>
 <li>The BN closes about 80% of the gap between the baseline and the resolution floor for CO (0.798 ± 0.014), and about 77% for NOx (0.772 ± 0.166), so there is little room for improvement in the model for these gases with 3 bins, but for NO2 the gap is closed by about 33% (0.334 ± 0.138), so there is much more room for improvement.</li>
-<li>There is no clear difference between phase 3b (Emission Regime) and phase 2 BNs for CO and NOx where the gaps are smaller than the stds (CO: 0.003 ± 0.030, NOx: 0.016 ± 0.052). For NO2, phase 3b does seem to do a little better (0.137 ± 0.082), but not that much, so it is not firm evidence.</li>
+<li>There is no clear difference between phase 3b (Emission Regime) and phase 3a BNs for CO and NOx where the gaps are smaller than the stds (CO: 0.003 ± 0.030, NOx: 0.016 ± 0.052). For NO2, phase 3b does seem to do a little better (0.137 ± 0.082), but not that much, so it is not firm evidence.</li>
 </ul>
 <h4 id="Limitations">Limitations<a class="anchor-link" href="#Limitations">¶</a></h4><ul>
-<li>Only 3 bins are used, which means the resolution is low, and using more bins would help with that, but it would make it so we have less evidence per bin, so we kept the 3 bins</li>
+<li>Sections 1–9 use 3 bins; the concentration evaluation adds 5 bins, which lower MAE for every gas but close less of the gap to the floor.</li>
 <li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a “high” posterior overshoots. More bins narrow the top bin; season-aware bin means would address the seasonal part and are future work.</li>
 <li>The trace plots show seed 0 on one validation week. The MAE bars and the table are means over the three split seeds.</li>
 </ul>

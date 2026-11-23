@@ -7922,13 +7922,13 @@ Weather (&lt;Weather.T: 'T'&gt;, &lt;Weather.RH: 'RH'&gt;)
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>1. Load the data and define the Phase 2 network</strong>
-The Phase 2 edges are:</p>
+<p><strong>1. Load the data and define the Phase 3a network</strong></p>
+<p>Phase 3a is Phase 2's nominal network plus the cross-sensitivity edges selected in the cross-sensitivity study (dashed in the figure):</p>
 <ul>
 <li>S1 $\leftarrow$ CO</li>
 <li>S3 $\leftarrow$ NOx</li>
-<li>S4 $\leftarrow$ NO2, CO, NOx</li>
-<li>S5 $\leftarrow$ CO, NOx</li>
+<li>S4 $\leftarrow$ NO2 (nominal), CO, NOx (cross)</li>
+<li>S5 $\leftarrow$ CO, NOx (cross)</li>
 </ul>
 <p>Every sensor also has T and RH as parents. The gas nodes each have hour as their parent. Gas references are prediction targets, never evidence.</p>
 </div>
@@ -7939,12 +7939,12 @@ The Phase 2 edges are:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">load_air_quality</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">air_quality_csv</span><span class="p">)</span>
 
-<span class="c1"># Phase 2 requires observed input variables. Do not drop rows just because a</span>
+<span class="c1"># Phase 3a requires observed input variables. Do not drop rows just because a</span>
 <span class="c1"># reference gas or a sensor is missing: the BN can handle missing observations.</span>
 <span class="n">before</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
 <span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="n">Time</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span> <span class="o">*</span><span class="n">WEATHER</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -8956,8 +8956,9 @@ Saved validation concentration table.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p><strong>7. Final test evaluation - selected configuration only</strong></p>
-<p>The selected discretizer and fitted models are reused from the chosen (bins, seed) run. No test labels or test metrics were used for selection. Each model predicts each gas once on the test split.</p>
+<p><strong>7. Test evaluation - selected configuration only</strong></p>
+<p><em>Exploratory test check, models fit on train only. Superseded by <code>notebooks/final/eval.ipynb</code>; not used in the report.</em></p>
+<p>The selected discretizer and fitted models are reused from the chosen (bins, seed) run. No test labels or test metrics were used for selection.</p>
 </div>
 </div>
 </div>
@@ -9144,7 +9145,7 @@ Saved validation concentration table.
 <li><strong>CO(GT):</strong> the BN clearly beats the hour-only baseline (5 bins: MAE 0.488 ± 0.044 vs 0.845 ± 0.039; RMSE 0.717 ± 0.063 vs 1.142 ± 0.033). The gap to the resolution floor (MAE 0.320) is the smallest of the three gases, so for CO the bins are a large part of the remaining error.</li>
 <li><strong>NOx(GT):</strong> the largest gain (5 bins: MAE 76.7 ± 2.1 vs 136.0 ± 5.2). Going from 3 to 5 bins helps a lot (91.8 → 76.7).</li>
 <li><strong>NO2(GT):</strong> only a modest gain (5 bins: MAE 29.9 ± 2.6 vs 31.8 ± 2.7). The seed spread is about as large as the difference, so this is not a clear win. The MAE is also far above the resolution floor (11.3), so the limit here is the evidence (what the sensors and weather say about NO2), not the bin count.</li>
-<li><strong>Test (5 bins, seed 1):</strong> the pattern holds on held-out data. BN MAE is 0.533 (CO), 82.4 (NOx) and 28.4 (NO2), against 0.948, 149.4 and 30.7 for the hour-only baseline.</li>
+<li><strong>Test (5 bins, seed 1; exploratory check, models fit on train only, superseded by <code>notebooks/final/eval.ipynb</code> and not used in the report):</strong> the pattern holds on held-out data.</li>
 <li><strong>Bins:</strong> 5 bins beat 3 bins on every gas. The error is still above the resolution floor for all gases, so neither the bin count nor the model is solely to blame.</li>
 </ul>
 <p>Because the final estimate is a posterior expectation over bins (bin probabilities times training bin means), it is bounded above by the largest training bin mean. Extreme spikes are therefore systematically underestimated.</p>
@@ -9411,12 +9412,15 @@ NO2(GT) edges match Discretizer: 1.0
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="Summary-Report">Summary Report<a class="anchor-link" href="#Summary-Report">¶</a></h3><h4 id="Interpretations">Interpretations<a class="anchor-link" href="#Interpretations">¶</a></h4><ul>
-<li>Phase 3a's BN removes about 37% of the hour only baseline's MAE for CO (0.365 ± 0.063), about 3% for NO2 (0.028 ± 0.010), and about 33% for NOx (0.327 ± 0.027)</li>
-<li>The BN closes about 80% of the gap between the baseline and the resolution floor for CO (0.793 ± 0.026), and about 77% for NOx (0.761 ± 0.235), so there is little room for improvement in the model for these gases with 3 bins, but for NO2 the gap is closed by about 6% (0.060 ± 0.023), so there is much more room for improvement.</li>
+<li><strong>Vs the hour baseline (3 bins):</strong> Phase 3a's BN removes about 37% of the hour-only baseline's MAE for CO (0.365 ± 0.063), about 33% for NOx (0.327 ± 0.027) and only about 3% for NO2 (0.028 ± 0.010).</li>
+<li><strong>Vs the resolution floor:</strong> the BN closes about 79% of the gap between the baseline and the floor for CO (0.793 ± 0.026) and about 76% for NOx (0.761 ± 0.235), so little room is left for these gases at 3 bins. For NO2 it closes only about 6% (0.060 ± 0.023): its limit is the evidence, not the bins.</li>
+<li><strong>What the cross edges buy (vs Phase 2, same splits and bins):</strong> adding the cross-sensitivity edges lowers MAE relative to the nominal-only network for every gas: CO by 9.2% (0.092 ± 0.035), NOx by 6.1% (0.061 ± 0.039) and NO2 by 3.4% (0.034 ± 0.023). The largest gain is CO, whose information in S4 and S5 the nominal network ignored.</li>
+<li><strong>Bin count:</strong> 5 bins are chosen on validation (mean BN/baseline MAE ratio 0.693 ± 0.015 vs 0.760 ± 0.026 at 3 bins). At 5 bins, MAE is 0.488 mg/m³ for CO, 76.7 ppb for NOx and 29.9 µg/m³ for NO2.</li>
 </ul>
 <h4 id="Limitations">Limitations<a class="anchor-link" href="#Limitations">¶</a></h4><ul>
-<li>Only 3 bins are used, which means the resolution is low, and using more bins would help with that, but it would make it so we have less evidence per bin, so we kept the 3 bins</li>
-<li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a “high” posterior overshoots. More bins narrow the top bin; season-aware bin means would address the seasonal part and are future work.</li>
+<li>The cross-sectional comparison in this section uses 3 bins so that it matches the other phases. 5 bins lower MAE for every gas, but the floor drops faster, so the share of the gap closed falls. Finer bins raise the ceiling, but each CPT row has fewer training hours behind it.</li>
+<li>NO2 barely improves on the hour baseline even with the cross edges: S4, its only nominal sensor, tracks CO more than NO2.</li>
+<li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a "high" posterior overshoots. Season-aware bin means are future work.</li>
 <li>The trace plots show seed 0 on one validation week. The MAE bars and the table are means over the three split seeds.</li>
 </ul>
 </div>

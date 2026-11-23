@@ -8706,21 +8706,21 @@ W = (T, RH) ──► every sensor
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=0: 8 iterations, converged: True, monotone: True, 8s
+<pre>bins=5 seed=0: 8 iterations, converged: True, monotone: True, 6s
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=1: 6 iterations, converged: True, monotone: True, 6s
+<pre>bins=5 seed=1: 6 iterations, converged: True, monotone: True, 4s
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>bins=5 seed=2: 7 iterations, converged: True, monotone: True, 7s
+<pre>bins=5 seed=2: 7 iterations, converged: True, monotone: True, 5s
 </pre>
 </div>
 </div>
@@ -10718,7 +10718,8 @@ W = (T, RH) ──► every sensor
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="12.-Test-set:-chosen-configuration,-reported-once">12. Test set: chosen configuration, reported once<a class="anchor-link" href="#12.-Test-set:-chosen-configuration,-reported-once">¶</a></h2><p>Everything above was chosen on val. This is the only cell that reads <strong>test</strong>. Same fitted models as the grid (trained on train only), same metrics.</p>
+<h2 id="12.-Test-set:-chosen-configuration">12. Test set: chosen configuration<a class="anchor-link" href="#12.-Test-set:-chosen-configuration">¶</a></h2><p><em>Exploratory test check, models fit on train only. Superseded by <code>notebooks/final/eval.ipynb</code>; not used in the report.</em></p>
+<p>Everything above was chosen on val. Same fitted models as the grid (trained on train only), same metrics.</p>
 </div>
 </div>
 </div>
@@ -10900,7 +10901,7 @@ W = (T, RH) ──► every sensor
 <li>CO and NOx are well calibrated (ECE 0.035, 0.038, better than the baseline). NO2 is overconfident (0.076 vs 0.045).</li>
 </ul>
 </li>
-<li><p><strong>Test</strong> (5 bins, reported once):</p>
+<li><p><strong>Test</strong> (5 bins; exploratory check, models fit on train only, superseded by <code>notebooks/final/eval.ipynb</code> and not used in the report):</p>
 <ul>
 <li>CO: MAE 0.597 ± 0.048 vs 0.935 mg/m³, log-lik −0.984 vs −1.378 (n = 1751).</li>
 <li>NOx: MAE 97.5 ± 16.0 vs 143.9 ppb (n = 1776).</li>
@@ -10932,7 +10933,7 @@ W = (T, RH) ──► every sensor
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=75504aeb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=52">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -10949,7 +10950,7 @@ W = (T, RH) ──► every sensor
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5230808f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=53">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -10989,7 +10990,7 @@ NO2(GT) [ 83. 123.]
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=77b54451">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=54">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -11138,22 +11139,32 @@ NO2(GT) [ 83. 123.]
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8283dfcd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=55">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="Summary-Report">Summary Report<a class="anchor-link" href="#Summary-Report">¶</a></h3><h4 id="Interpretations">Interpretations<a class="anchor-link" href="#Interpretations">¶</a></h4><ul>
-<li>Phase 2's BN removes about 30% of the hour only baseline's MAE for CO (0.301 ± 0.042) and about 28% for NOx (0.282 ± 0.044). For NO2, the BN performs about 1% worse than than the basline (-0.007 ± 0.020).</li>
-<li>The BN closes about 66% of the gap between the baseline and the resolution floor for CO (0.658 ± 0.042), and about 67% for NOx (0.671 ± 0.277), so there is little room for improvement in the model for these gases with 3 bins.</li>
-<li>For No2, the gap between the baseline and the resolution floor widens about 2% (-0.018 ± 0.046), so this BN performs slightly worse than the baseline with this bin count.</li>
+<li>Phase 2's BN removes about 30% of the hour-only baseline's MAE for CO (0.301 ± 0.042) and about 28% for NOx (0.282 ± 0.044). For NO2 it is about 1% worse than the baseline (−0.007 ± 0.020).</li>
+<li>The BN closes about 66% of the gap between the baseline and the resolution floor for CO (0.658 ± 0.042) and about 67% for NOx (0.671 ± 0.277). For NO2 the gap widens by about 2% (−0.018 ± 0.046), so at 3 bins this BN is slightly worse than the baseline for NO2.</li>
 </ul>
 <h4 id="Limitations">Limitations<a class="anchor-link" href="#Limitations">¶</a></h4><ul>
-<li>Only 3 bins are used, which means the resolution is low, and using more bins would help with that, but it would make it so we have less evidence per bin, so we kept the 3 bins</li>
-<li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a “high” posterior overshoots. More bins narrow the top bin; season-aware bin means would address the seasonal part and are future work.</li>
+<li>The comparison in this section uses 3 bins so it matches the other phases. 5 bins lower MAE (see 7.2), but the floor drops faster, so the share of the gap closed falls.</li>
+<li>The concentration estimate uses year-round training bin means, so in low-pollution seasons a "high" posterior overshoots. Season-aware bin means are future work.</li>
 <li>The trace plots show seed 0 on one validation week. The MAE bars and the table are means over the three split seeds.</li>
 </ul>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=56">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><em>AI use: code started and debugged with help from Claude, edited, reviewed and run by me.</em></p>
 </div>
 </div>
 </div>
