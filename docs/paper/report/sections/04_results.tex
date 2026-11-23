@@ -128,9 +128,10 @@ $S_4$, nominally an NO$_2$ sensor, tracks CO more strongly than NO$_2$.
 The main failure modes come from the discretization and the static CPTs.
 Because $\hat c$ mixes bin means, it caps peaks at the top bin's training mean
 and overshoots in clean weeks (\cref{app:trace}). One set of CPTs covers the
-year: trained on the first half of the year, Phase~2's CO MAE rises from 0.54
-to 0.81~mg/m$^3$ on later months and NO$_x$ error more than doubles as winter
-levels exceed the training bins. The fourth regime at $K_R = 4$ is seasonal,
+year: trained on March--September 2004 and scored on the following autumn
+(5 bins), Phase~2's CO MAE rises from 0.54 to 0.81~mg/m$^3$ and NO$_x$ error
+more than doubles (87 to 214~ppb) as winter levels exceed the training bins;
+the floor also rises (CO 0.32 to 0.52), so part of the loss is resolution. The fourth regime at $K_R = 4$ is seasonal,
 which points the same way.
 
 \subsection{Convergence and Stability}
