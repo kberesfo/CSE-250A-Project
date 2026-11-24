@@ -147,3 +147,14 @@ is the same solution reached imperfectly; we keep it as a flagged judgement
 call, with $K_R = 2$ as the strict alternative. Inference stays exact and
 linear in the number of hours, but its cost grows as $K^{\#\text{gases}}$
 (81 joint states at 3 bins, 375 at 5).
+
+\paragraph{Would more data help?} Not much more of the same data. EM converges
+within a few dozen iterations, and refitting on training plus validation
+($1.5\times$ the hours) leaves skill where it was on validation (CO 0.37 vs 0.37,
+NO$_x$ 0.32 vs 0.34, NO$_2$ 0.18 vs 0.16), so at 3 bins the CPTs are not short of
+hours. What would help is the right data. $S_5$'s nominal target, O$_3$, has no
+reference, so it can only be modeled through cross-sensitivities. An NMHC reference
+covering the year would let $S_2$ rejoin the network with its own gas. The
+C$_6$H$_6$ column is computed from $S_2$, so an independent benzene measurement is
+needed before $S_2$ can be checked at all. A second year would let the CPTs, or a
+season variable, absorb the drift in \cref{sec:learned}.

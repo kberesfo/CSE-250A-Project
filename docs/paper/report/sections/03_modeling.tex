@@ -22,7 +22,12 @@ metal-oxide sensors' dependence on temperature and humidity; and each sensor
 has its nominal target \citep{devito2008calibration} ($S_1$: CO, $S_3$:
 NO$_x$, $S_4$: NO$_2$) plus the cross-sensitivities selected from data
 (\cref{app:cross}): CO and NO$_x$ for $S_4$, and for $S_5$, whose target O$_3$
-has no reference. Phase~1 is the single-gas case with CO only
+has no reference. We added these edges because the sensors are not selective:
+after controlling for its nominal gas, the weather and the hour, $S_4$ still
+tracks CO (partial $\rho = 0.67$) and $S_5$ tracks CO and NO$_x$
+(\cref{tab:cross-main}). Leaving them out (Phase~2) throws that information
+away, while tying every sensor to CO alone (Phase~1) counts the evidence the
+sensors share twice. Phase~1 is the single-gas case with CO only
 (\cref{app:networks}). \Cref{eq:factorization} assumes the gases are
 independent given the hour, each sensor is independent of the others given its
 parents, and hours are independent with one set of CPTs for the year. The
@@ -40,11 +45,34 @@ when sensors share an unmodeled signal.
   \label{fig:network}
 \end{figure}
 
+\begin{table}[t]
+  \centering\small
+  \caption{Cross-sensitivity edges kept by the study (\cref{app:cross}):
+  partial rank correlation with the sensor given its existing parents, weather
+  and hour, and the gain in the sensor CPT's validation log-likelihood; mean
+  over three split seeds.}
+  \label{tab:cross-main}
+  \begin{tabular}{llrr}
+    \toprule
+    Sensor & Gas (given) & Partial $\rho$ & $\Delta$LL (nats/h) \\
+    \midrule
+    $S_4$ & CO (NO$_2$)         & 0.67    & $0.157 \pm 0.022$ \\
+    $S_4$ & NO$_x$ (NO$_2$, CO) & $-0.50$ & $0.033 \pm 0.002$ \\
+    $S_5$ & CO                  & 0.85    & $0.403 \pm 0.026$ \\
+    $S_5$ & NO$_x$ (CO)         & 0.43    & $0.052 \pm 0.014$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \subsection{Latent Emission Regime}
 \label{sec:latent}
-The three gases share one source, traffic, and still co-move within a given
-hour (\cref{sec:q2}). We therefore add a latent regime
-$R \in \{1,\dots,K_R\}$ and replace $\prod_j P(G_j \mid H)$ with
+Even given the hour, the three gases stay strongly correlated (mean rank
+correlation 0.54, \cref{sec:q2}), because one unobserved cause, traffic,
+drives all of them. Gas-to-gas edges could model that dependence, but they
+would need a direction and would enlarge every gas CPT; a latent regime models
+the common cause directly, with fewer parameters and states we can interpret.
+We therefore add a latent regime $R \in \{1,\dots,K_R\}$ and replace
+$\prod_j P(G_j \mid H)$ with
 \begin{equation}
   P(G \mid H, D) = \sum_{r=1}^{K_R} P(R{=}r \mid H, D)
   \prod_{j} P(G_j \mid R{=}r).
@@ -53,13 +81,10 @@ $R \in \{1,\dots,K_R\}$ and replace $\prod_j P(G_j \mid H)$ with
 $R$ is hidden on every hour, so its CPTs are learned only through EM. The
 gases depend on time only through $R$, so $D$ enters once rather than in a
 table per gas, and the network is smaller: 870 free parameters at
-$K = K_R = 3$ against 900 without the regime (486 of them in $S_4$'s CPT). If
-$R$ captures the shared cause, the gases should be nearly independent within a
-regime; we test this with posterior-weighted rank correlations, inferring $R$
-either from all observed values or, more strictly, from the sensors alone. We
-compared $K_R \in \{2,3,4\}$ and weekday vs.\ day of week by validation
-log-likelihood, requiring regimes that are reproducible across restarts;
-keeping a direct $H \to G_j$ edge alongside $R$ was never reproducible.
+$K = K_R = 3$ against 900 without the regime. If $R$ captures the shared
+cause, the gases should be nearly independent within a regime; we test this
+with posterior-weighted rank correlations, inferring $R$ either from all
+observed values or, more strictly, from the sensors alone.
 
 \subsection{Learning with Missing Data (EM)}
 \label{sec:em}

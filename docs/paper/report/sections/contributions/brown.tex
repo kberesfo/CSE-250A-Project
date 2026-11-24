@@ -2,15 +2,10 @@
 % Contribution: what you built/ran, with PR or issue numbers.
 % Reflection: one success, one failure or surprise, what you'd change.
 \textbf{Contribution:} Set up and ran Phase~2, the multi-gas network with nominal edges
-(\#17, \#33, PRs~\#32 and~\#38), including the drop-one-sensor ablation, the
-assumption and drift checks, and its results that feed the shared concentration
-evaluation, and wrote the conclusion and abstract of the report (\#48, PR~\#49 and~\#51).
+(\#17, \#33, PRs~\#32, \#38), including its ablation, assumption and drift checks,
+and wrote the conclusion and abstract (\#48, PR~\#49 and~\#51).
 
-\noindent\textbf{Reflection:} Working on Phase~2 showed me how much a
-networks structure decides what it believes, since tying each sensor only to
-its own gas removed Phase~1 overconfidence but left CO with a single sensor
-and lower accuracy, so calibration and accuracy can pull in opposite
-directions. With more time, I would rerun the drop-one-sensor ablation on
-Phase~3a to check whether the cross-sensitivity edges bring the
-overconfidence back, and check every phase on a chronological split, which
-showed drift that our blocked split hides.
+\noindent\textbf{Reflection:} Phase~2 showed me that tying each sensor only to
+its own gas removes Phase~1's overconfidence but costs CO accuracy.
+With more time, I would rerun the ablation on
+Phase~3a and test every phase on a chronological split.

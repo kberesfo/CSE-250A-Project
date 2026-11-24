@@ -14,7 +14,7 @@
 % "Sources & AI use" section of merged PRs:
 %   gh pr list --state merged --json number,title,body
 
-\subsection*{Advice for Future Students}
+\paragraph*{Advice for Future Students}
 % ~3--4 bullets, each a lesson from this project, not generic advice:
 % - Check whether a "ground truth" column is itself derived from a sensor
 %   (C6H6 was a transform of S2) before building on it.
@@ -26,11 +26,13 @@
 Check whether a ``ground truth'' column is itself derived from a sensor
 before building on it (C$_6$H$_6$ was a transform of $S_2$). Split by blocks of
 time, not random hours, since neighbouring hours leak. With a latent variable,
-judge the number of states by restart stability, not likelihood alone. Scope
-the reach goal early: the temporal model was planned but not reached.
+judge the number of states by restart stability, not likelihood alone. Budget
+time for data surprises: problems like these, and references missing on
+17--18\% of hours, forced us to rework the network and used the time we had set
+aside for our reach goal, a temporal model of the regime.
 
 
-\subsection*{Contributions and Reflections}
+\paragraph*{Contributions and Reflections}
 
 \paragraph{Kiernan Beresford.}
 \input{sections/contributions/beresford}
@@ -47,12 +49,11 @@ the reach goal early: the temporal model was planned but not reached.
 \paragraph{Joyce Yang.}
 \input{sections/contributions/yang}
 
-\subsection*{Use of Generative AI}
+\paragraph*{Use of Generative AI}
 % ~3--4 sentences. Which tools; what for (code review, tests, explainer
 % notebooks, drafting/editing text); what was NOT delegated (design decisions,
 % running and checking experiments); how outputs were verified (tests, reruns,
 % review in PRs). Pull per-PR notes with the gh command above.
 
 Claude (Anthropic) was used for code review, generating unit tests, and
-outlining and condensing our notebook text and this report to fit the page
-limit. It was \emph{not} used for design decisions or running experiments.
+outlining and text review. It was \emph{not} used for design decisions or running experiments.

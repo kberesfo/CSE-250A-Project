@@ -1,14 +1,10 @@
 % <Name>: 2--3 sentences total (~0.1 page). Plain text, no \section or \item.
 % Contribution: what you built/ran, with PR or issue numbers.
 % Reflection: one success, one failure or surprise, what you'd change.
-\textbf{Contribution:} Ran the exploratory analysis and target selection
-(\#4, PR~\#8), the sensor cross-sensitivity study that chose the dashed
-edges (\#16, PR~\#23), and Phase~3b, the latent emission regime (\#19,
-PR~\#24), including a faster exact EM for layered networks and the shared
-restart-stability and within-regime correlation helpers.
+\textbf{Contribution:} Ran the exploratory analysis (\#4, PR~\#8), the sensor
+cross-sensitivity study (\#16, PR~\#23) and Phase~3b, the latent emission
+regime (\#19, PR~\#24), with a faster exact EM and the stability helpers.
 
-\noindent\textbf{Reflection:} One thing I was happy with was seeing how much 
-the latent Event model reduced the correlation between gases, which showed 
-that it was capturing patterns in traffic and emissions that the earlier model missed. 
-I was surprised by how inconsistent some of the results were across different EM restarts, 
-and I learned that checking model stability early on is just as important as improving its performance.
+\noindent\textbf{Reflection:} I was happy that the latent regime cut the
+gas--gas correlation to 0.05, so it captured the shared traffic signal. I was
+surprised how much EM restarts disagreed, and learned to check stability early.

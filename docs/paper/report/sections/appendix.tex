@@ -119,29 +119,6 @@ refit and scored on test.
   \end{tabular}
 \end{table}
 
-\FloatBarrier
-\section{Missing Data}
-\label{app:missing}
-
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[t]{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{muska/missingness}
-    \caption{Share of hours missing, per column.}
-    \label{fig:missing-col}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.48\linewidth}
-    \centering
-    \includegraphics[width=\linewidth]{muska/missing_by_hour}
-    \caption{Reference gaps by hour of day (CO and NO$_2$; NO$_x$ is nearly
-    identical to NO$_2$).}
-    \label{fig:missing-hour}
-  \end{subfigure}
-  \caption{Missing data. Sensors and weather go missing together (device
-  outages); the reference gases are missing far more often: on a 14--20\% baseline of mostly multi-day outages, each analyzer also drops out in one fixed hour (NO$_x$ and NO$_2$ at 3\,AM, CO at 4\,AM).}
-  \label{fig:missing}
-\end{figure}
 
 \FloatBarrier
 \section{Cross-Sensitivity Study}
@@ -258,11 +235,17 @@ make the posterior overconfident (\cref{sec:bn}).
 \section{Code and Results}
 \label{app:code}
 All code and results are at \url{https://github.com/kberesfo/CSE-250A-Project}.
-The final runs are the executed notebooks in \texttt{notebooks/<phase>/eval.ipynb}
-and \texttt{notebooks/studies/}, which GitHub displays with their outputs;
-generated tables and HTML reports are in \texttt{results/}, and figures in
-\texttt{figures/}. To reproduce them, open the repository in its dev container,
-download the data, and rerun every notebook on a fresh kernel:
+The network, EM and inference are our own code, built on NumPy
+\citep{harris2020numpy}, pandas \citep{mckinney2010pandas} and SciPy
+\citep{virtanen2020scipy}; figures use Matplotlib \citep{hunter2007matplotlib}
+and seaborn \citep{waskom2021seaborn}.
+
+The executed notebooks are in \path{notebooks/}, which GitHub displays with
+their outputs: one \path{eval.ipynb} per phase, the test run in \path{final/} and
+the supporting studies in \path{studies/}. Generated tables and HTML reports are
+in \path{results/}, and figures in \path{figures/}. To reproduce everything, open
+the repository in its dev container, download the data and rerun every notebook
+on a fresh kernel:
 \begin{verbatim}
 uv run python scripts/get_data
 make
