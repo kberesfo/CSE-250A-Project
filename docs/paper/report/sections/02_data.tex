@@ -52,8 +52,9 @@ absolute humidity is mostly determined by the two and would triple every
 sensor CPT. The metal-oxide sensors are not selective: each responds to
 several traffic gases as well as to temperature and humidity
 (\cref{app:cross}); $S_4$, for example, tracks CO more strongly than its
-nominal NO$_2$. This is why the network (\cref{sec:bn}) lets a sensor have
-more than one gas parent and conditions every sensor on the weather.
+nominal NO$_2$. This cross-sensitivity is what justifies the network design 
+(\cref{sec:bn}): every sensor is conditioned on the weather, and $S_4$ and $S_5$ 
+get gas parents beyond their nominal target.
 
 \paragraph{Discretization and splits.} Gases, sensors, T and RH are cut into
 $K$ quantile bins fit on the training data only ($K = 3$ by default, $K = 5$
