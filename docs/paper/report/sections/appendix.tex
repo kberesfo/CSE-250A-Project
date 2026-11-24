@@ -235,11 +235,17 @@ make the posterior overconfident (\cref{sec:bn}).
 \section{Code and Results}
 \label{app:code}
 All code and results are at \url{https://github.com/kberesfo/CSE-250A-Project}.
-The final runs are the executed notebooks in \texttt{notebooks/<phase>/eval.ipynb}
-and \texttt{notebooks/studies/}, which GitHub displays with their outputs;
-generated tables and HTML reports are in \texttt{results/}, and figures in
-\texttt{figures/}. To reproduce them, open the repository in its dev container,
-download the data, and rerun every notebook on a fresh kernel:
+The network, EM and inference are our own code, built on NumPy
+\citep{harris2020numpy}, pandas \citep{mckinney2010pandas} and SciPy
+\citep{virtanen2020scipy}; figures use Matplotlib \citep{hunter2007matplotlib}
+and seaborn \citep{waskom2021seaborn}.
+
+Each phase's executed notebook is in \texttt{notebooks/<phase>/eval.ipynb}, the
+test run in \texttt{notebooks/final/eval.ipynb} and the supporting studies in
+\texttt{notebooks/studies/}; GitHub displays all of them with their outputs.
+Generated tables and HTML reports are in \texttt{results/}, and figures in
+\texttt{figures/}. To reproduce everything, open the repository in its dev
+container, download the data and rerun every notebook on a fresh kernel:
 \begin{verbatim}
 uv run python scripts/get_data
 make
